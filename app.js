@@ -1107,10 +1107,51 @@ function applyAtmosphere(type, container) {
 
 // Drawing logic
 function initCanvas() {
-    const canvas = document.getElementById('drawing-canvas'); if (!canvas) return; ctx = canvas.getContext('2d');
+    const canvas = document.getElementById('drawing-canvas'); 
+    if (!canvas) return; 
+    ctx = canvas.getContext('2d');
+    
+    // Mouse events
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
     canvas.addEventListener('mousemove', paint);
     canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
+    canvas.addEventListener('mouseleave', () => { isDrawing = false; ctx.beginPath(); });
+    
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; paintTouch(e); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); paintTouch(e); }, { passive: false });
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); isDrawing = false; ctx.beginPath(); }, { passive: false });
+    
+    // Resize canvas for mobile
+    resizeCanvas();
+}
+
+function resizeCanvas() {
+    const canvas = document.getElementById('drawing-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const maxW = Math.min(container.offsetWidth - 20, 600);
+    canvas.style.width = maxW + 'px';
+    canvas.style.height = Math.round(maxW * 2/3) + 'px';
+}
+
+function paintTouch(e) {
+    if (!isDrawing) return;
+    const canvas = document.getElementById('drawing-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    ctx.lineWidth = currentTool === 'eraser' ? 30 : 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
 }
 function startDrawing(char) { 
     currentChar = char; 
@@ -1123,7 +1164,23 @@ function startDrawing(char) {
     showScreen('drawing-screen'); 
     clearCanvas(); 
 }
-function paint(e) { if (!isDrawing) return; const rect = e.target.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor; if(currentTool==='eraser') ctx.lineWidth = 20; ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y); }
+function paint(e) { 
+    if (!isDrawing) return; 
+    const canvas = document.getElementById('drawing-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX; 
+    const y = (e.clientY - rect.top) * scaleY; 
+    ctx.lineWidth = currentTool === 'eraser' ? 30 : 5; 
+    ctx.lineCap = 'round'; 
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor; 
+    ctx.lineTo(x, y); 
+    ctx.stroke(); 
+    ctx.beginPath(); 
+    ctx.moveTo(x, y); 
+}
 function setTool(tool) { currentTool = tool; document.querySelectorAll('.tool-item').forEach(i => i.classList.remove('active')); document.getElementById(`tool-${tool}`).classList.add('active'); }
 function setColor(color) { currentColor = color; currentTool = 'brush'; setTool('brush'); }
 function clearCanvas() { ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 800, 600); }

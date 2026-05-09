@@ -1144,3 +1144,126 @@ body.device-tablet #app {
 
 .word-opt-card.correct { background: #064e3b; border-color: #22c55e; }
 .word-opt-card.wrong { background: #450a0a; border-color: #ef4444; }
+
+/* ===========================
+   Mobile Responsive Styles
+   =========================== */
+@media (max-width: 768px) {
+
+    main {
+        padding: 0.8rem;
+    }
+
+    /* Navbar: wrap to 2 rows, hide less important items */
+    .top-bar {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 0.6rem 1rem;
+    }
+
+    .logo {
+        font-size: 1.1rem;
+        flex: 1;
+    }
+
+    .user-stats {
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    /* Hide XP bar label on mobile to save space */
+    .user-stats .stat-item {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+    }
+
+    /* Make navbar buttons smaller */
+    .user-stats .btn-secondary {
+        padding: 4px 8px !important;
+        font-size: 0.75rem !important;
+        margin: 0 !important;
+    }
+
+    /* Hide milestone counter on mobile */
+    .milestone-counter { display: none; }
+
+    /* XP bar smaller */
+    .xp-container { width: 80px; }
+
+    /* Drawing Screen: full width canvas */
+    .drawing-container {
+        width: 100% !important;
+        padding: 5px;
+    }
+
+    #drawing-canvas {
+        width: 100% !important;
+        height: auto !important;
+        touch-action: none; /* Critical: prevent page scroll while drawing */
+    }
+
+    /* Toolbar wraps on small screens */
+    .drawing-toolbar {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+        gap: 10px;
+        border-radius: 20px;
+        justify-content: center;
+    }
+
+    .tool-item {
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+    }
+
+    .color-dot {
+        width: 26px;
+        height: 26px;
+    }
+
+    /* Drawing screen title smaller */
+    #drawing-screen h2 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #drawing-desc {
+        font-size: 0.9rem !important;
+    }
+
+    /* Map cards smaller */
+    .world-map {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .area-img { height: 100px; }
+    .area-title { font-size: 1.3rem; }
+
+    /* Character grid */
+    .character-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 1rem;
+    }
+
+    .char-glyph { font-size: 3rem; }
+
+    /* RPG grid scale down */
+    .rpg-grid {
+        grid-template-columns: repeat(10, 30px);
+        grid-template-rows: repeat(10, 30px);
+    }
+
+    .rpg-cell { font-size: 0.8rem; }
+
+    /* Modal full screen on mobile */
+    .modal-content {
+        max-width: 95vw !important;
+        max-height: 88vh;
+        padding: 1.5rem;
+        border-radius: 15px;
+    }
+}
