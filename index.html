@@ -3,536 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Â≠óÈÉ®‰ª∂Êé¢?™ÂÇ≥Ë™?| Character Quest</title>
+    <title>Â≠óÈÉ®‰ª∂Êé¢Èö™ÂÇ≥Ë™™ | Character Quest</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Lucide Icons for better UI -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <script>
         window.onerror = function(msg, url, line) {
-            const errDiv = document.createElement('div');
-            errDiv.style.color = 'red';
-            errDiv.style.position = 'fixed';
-            errDiv.style.top = '10px';
-            errDiv.style.left = '10px';
-            errDiv.style.zIndex = '9999';
-            errDiv.style.background = 'white';
-            errDiv.style.padding = '10px';
-            errDiv.innerText = "Error: " + msg + " at line " + line;
-            document.body.appendChild(errDiv);
+            const e = document.createElement('div');
+            e.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff0000;color:white;padding:10px;z-index:99999;font-size:12px;';
+            e.textContent = 'JS Error: ' + msg + ' (line ' + line + ')';
+            document.body.prepend(e);
         };
     </script>
-    <div class="stars"></div>
-    
-    <div id="app">
-        <!-- Top Navigation Bar -->
-        <header class="top-bar" id="navbar" style="display: none;">
-            <div class="logo">??Â≠óÈÉ®‰ª∂Êé¢?™ÂÇ≥Ë™?/div>
-            <div class="user-stats">
-                <button class="btn btn-secondary" onclick="showIsland()" style="padding: 5px 15px; font-size: 0.9rem;">??Ô∏??ëÁ?Â≥∂Â∂º</button>
-                <div class="stat-item">
-                    <span>Á≠âÁ?</span> <span class="level-badge" id="user-level">1</span>
+    <header class="top-bar" id="navbar" style="display: none;">
+        <div class="logo">üîÆ Â≠óÈÉ®‰ª∂Êé¢Èö™ÂÇ≥Ë™™</div>
+        <div class="user-stats">
+            <button class="btn btn-secondary" onclick="showIsland()" style="padding:5px 15px;font-size:0.9rem;">üó∫Ô∏è ÊàëÁöÑÂ≥∂Â∂º</button>
+            <div class="stat-item"><span>Á≠âÁ¥ö</span> <span class="level-badge" id="user-level">1</span></div>
+            <div class="stat-item" style="flex-direction:column;align-items:flex-start;gap:2px;">
+                <div style="display:flex;justify-content:space-between;width:100%;font-size:0.7rem;">
+                    <span>Á∂ìÈ©óÂÄº (XP)</span><span id="user-xp-text">0 / 100</span>
                 </div>
-                <div class="stat-item" style="flex-direction: column; align-items: flex-start; gap: 2px;">
-                    <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.7rem;">
-                        <span>Á∂ìÈ???(XP)</span>
-                        <span id="user-xp-text">0 / 100</span>
-                    </div>
-                    <div class="xp-container">
-                        <div class="xp-fill" id="user-xp-fill"></div>
-                    </div>
-                    <div id="milestone-text" class="milestone-counter">Ë∑ùÂ??™È???5 Â≠?/div>
-                </div>
-                <div class="stat-item" id="userName">?íÈö™??/div>
-                <button class="btn btn-secondary" onclick="showScreen('profile-screen'); renderProfile();" style="padding: 5px 15px; font-size: 0.8rem; background: var(--accent-purple); color: white;">?ë§ Á≤æÈ??Ä??/button>
-                <button class="btn btn-secondary" onclick="showEquipment()"><lucide-icon name="shield"></lucide-icon> ?áËÄÖË???/button>
-                <button class="btn btn-secondary" onclick="showCardBook()" style="padding: 5px 15px; font-size: 0.8rem; background: var(--accent-blue); color: white;">?é¥ Â≠óÂç°?ñÈ?</button>
-                <div class="stat-item" style="color: #fbbf24; font-weight: bold;">
-                    <span>??</span> <span id="top-bar-gems">0</span>
-                </div>
-                <button class="btn btn-secondary" onclick="exportStudentShareCode()" style="padding: 5px 15px; font-size: 0.8rem; background: #10b981; color: white;">?ì§ ?ØÂá∫?≤Â∫¶</button>
-                <button class="btn btn-secondary" onclick="showIntroManual()" style="padding: 5px 15px; font-size: 0.8rem; background: var(--primary-color);">?? ?íÈö™?ãÂ?</button>
-                <button class="btn btn-secondary" onclick="logout()" style="padding: 5px 10px; font-size: 0.8rem;">?¢È?</button>
+                <div class="xp-container"><div class="xp-fill" id="user-xp-fill"></div></div>
+                <div id="milestone-text" class="milestone-counter">Ë∑ùÈõ¢Ëß£ÈéñÈÇÑÊúâ 5 Â≠ó</div>
             </div>
-        </header>
-
-        <main>
-            <!-- 1. Login Screen -->
-            <section id="login-screen" class="screen active">
-                <div class="login-container">
-                    <h1>?áËÄÖË?Â≠óÂ§ß?¢Èö™</h1>
-                    <div style="margin-bottom: 2rem;">
-                        <input type="text" id="usernameInput" placeholder="Ëº∏ÂÖ•‰Ω†Á??íÈö™?±Á®±" 
-                               style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 1.1rem; background: #334155; color: white;">
-                    </div>
-                    
-                    <div style="margin-bottom: 2rem; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-                        <button class="btn btn-grade active" onclick="selectGrade('1A', this)">‰∏Ä‰∏?/button>
-                        <button class="btn btn-grade" onclick="selectGrade('1B', this)">‰∏Ä‰∏?/button>
-                        <button class="btn btn-grade" onclick="selectGrade('2A', this)">‰∫å‰?</button>
-                        <button class="btn btn-grade" onclick="selectGrade('2B', this)">‰∫å‰?</button>
-                    </div>
-
-                    <button class="btn" onclick="login('student')" style="width: 100%;">?ãÂ??íÈö™</button>
-                    <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn btn-secondary" onclick="login('teacher')">?ëÊòØÂ∞éÂ∏´</button>
-                        <button class="btn btn-secondary" onclick="openStudentImportModal()" style="font-size: 0.9rem;">?ì• ?ØÂÖ•?ëÁ??≤Â∫¶</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 2. Main Map Screen -->
-            <section id="map-screen" class="screen">
-                <h2 style="text-align: center; margin-bottom: 2rem;">?∏Ê?‰∏Ä?ãÂ??èÈ??üÈ?ÂßãÊé¢??/h2>
-                <div class="world-map" id="area-map">
-                    <!-- Dynamic Areas generated by JS -->
-                </div>
-            </section>
-
-            <!-- Avatar Profile Screen -->
-            <section id="profile-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <button class="btn btn-secondary" onclick="showScreen('map-screen')">??ËøîÂ??∞Â?</button>
-                    <h2>?ëÁ?Êº¢Â?Á≤æÈ?</h2>
-                    <div style="width: 100px;"></div>
-                </div>
-                <div class="avatar-profile" id="avatar-profile-container">
-                    <!-- Dynamic Profile -->
-                </div>
-            </section>
-
-            <!-- Card Collection Screen -->
-            <section id="cards-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <button class="btn btn-secondary" onclick="showScreen('map-screen')">??ËøîÂ??∞Â?</button>
-                    <h2 style="color: var(--accent-blue);">?é¥ Â≠óÂç°?ñÈ??∂È???/h2>
-                    <div style="width: 100px;"></div>
-                </div>
-                <div class="card-book-grid" id="card-book-container">
-                    <!-- Dynamic Cards -->
-                </div>
-            </section>
-
-            <!-- 3. Library / Quest Screen -->
-            <section id="library-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <button class="btn btn-secondary" onclick="showScreen('map-screen')">??ËøîÂ??∞Â?</button>
-                    <h2 id="area-title-display">?¢Á¥¢‰∏?..</h2>
-                    <div id="area-stats"></div>
-                </div>
-                <div class="character-grid" id="char-list">
-                    <!-- Dynamic characters -->
-                </div>
-            </section>
-
-            <!-- 4. Island Designer Screen -->
-            <section id="island-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <button class="btn btn-secondary" onclick="showScreen('map-screen')">??ËøîÂ??∞Â?</button>
-                    <h2 style="color: var(--text-gold);" id="island-title">?ëÁ?Ë≠òÂ?Â≥∂Â∂º</h2>
-                    <p style="font-size: 0.9rem; opacity: 0.8;" id="grade-badge">Â≠∏Ê?Ôºö‰?‰∏?/p>
-                </div>
-                
-                <div style="display: flex; gap: 20px; height: 500px;">
-                    <!-- Island Navigator Sidebar -->
-                    <div id="island-navigator" class="island-nav">
-                        <!-- Dynamic Island Sidebar Generated by JS -->
-                    </div>
-
-                    <div id="island-screen-content" style="flex-grow: 1; position: relative; border-radius: 20px; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.1);">
-                        <div id="island-atmosphere" class="island-atmosphere"></div>
-                        <div id="island-container">
-                            <div class="island-base" id="island-base">
-                                <!-- Stamped character drawings go here -->
-                            </div>
-                            <div class="ocean-overlay"></div>
-                        </div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="btn" onclick="showDashboard()">ËøîÂ??∞Â?</button>
-                </div>
-            </section>
-
-            <!-- 5. Drawing Screen -->
-            <section id="drawing-screen" class="screen">
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <h2 id="drawing-title">‰æùÁÖßÂ≠óÁ??∫„Ä?span id="drawing-char-display">?</span>?çÁï´‰∏ÄÂπÖÂ???/h2>
-                    <p id="drawing-desc" style="color: var(--text-gold); font-size: 1.1rem; margin-top: 0.5rem; background: rgba(0,0,0,0.3); display: inline-block; padding: 5px 15px; border-radius: 10px;">?®Â??´Â?Ê∑±‰?Â∞çÈÄôÂÄãÂ??ÑÈÄ??</p>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <div class="drawing-container" style="position: relative;">
-                        <div id="drawing-trace-text" class="trace-text"></div>
-                        <canvas id="drawing-canvas" width="600" height="400" style="position: relative; z-index: 10; background: transparent;"></canvas>
-                    </div>
-
-                    <div class="drawing-toolbar">
-                        <div class="tool-item active" id="tool-brush" onclick="setTool('brush')">??Ô∏?/div>
-                        <div class="tool-item" id="tool-eraser" onclick="setTool('eraser')">?ßΩ</div>
-                        <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
-                        <div class="color-dot" style="background: #000000;" onclick="setColor('#000000')"></div>
-                        <div class="color-dot" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
-                        <div class="color-dot" style="background: #22c55e;" onclick="setColor('#22c55e')"></div>
-                        <div class="color-dot" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
-                        <div class="color-dot" style="background: #f97316;" onclick="setColor('#f97316')"></div>
-                        <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
-                        <button class="btn btn-secondary" onclick="clearCanvas()" style="margin: 0; padding: 5px 15px;">?çÁï´</button>
-                        <button class="btn" onclick="saveDrawing()" style="margin: 0; padding: 8px 20px;">ÂÆåÊ?‰∏¶Êîæ?•Â≥∂Â∂?/button>
-                    </div>
-                    <button class="btn btn-secondary" onclick="cancelDrawing()" style="margin-top: 20px;">?ñÊ?</button>
-                </div>
-            </section>
-
-            <!-- 6. Teacher Dashboard -->
-            <section id="teacher-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2>Â∞éÂ∏´‰∏≠ÊéßÂÆ?- ?®Áè≠?∞Â??ÜÊ?</h2>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" onclick="showTeacherSection('stats')">Â≠∏Á??Ä??/button>
-                        <button class="btn" onclick="showTeacherSection('library')">Â≠óÂ∫´ÁÆ°Á?</button>
-                        <button class="btn btn-secondary" onclick="openStudentImportModal()">?ì• ?ØÂÖ•Â≠∏Á?Ë≥áÊ?</button>
-                        <button class="btn btn-secondary" onclick="logout()">?ªÂá∫</button>
-                    </div>
-                </div>
-
-                <div id="teacher-stats-section">
-                    <div style="background: rgba(30, 41, 59, 0.7); padding: 2rem; border-radius: 15px; border: 1px solid var(--text-gold);">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--text-gold); color: var(--text-gold);">
-                                    <th style="padding: 1rem;">?íÈö™?ÖÂ?Á®?/th>
-                                    <th>Á≠âÁ?</th>
-                                    <th>Ê≠?¢∫??/th>
-                                    <th style="width: 25%;">Â≠∏Á??≤Â∫¶</th>
-                                    <th>Âº±È?Â≠?/th>
-                                    <th>?•Á??≤Â∫¶</th>
-                                </tr>
-                            </thead>
-                            <tbody id="student-table-body">
-                                <!-- Dynamic data -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="teacher-library-section" style="display: none;">
-                    <div style="display: flex; gap: 15px; margin-bottom: 2rem;">
-                        <input type="text" id="libSearchInput" placeholder="?úÂ?Êº¢Â?..." oninput="renderLibraryManager()"
-                               style="flex-grow: 1; padding: 12px; border-radius: 8px; background: #334155; color: white; border: 1px solid var(--text-gold);">
-                        <button class="btn" onclick="openEditModal(null)">???∞Â??üÂ?</button>
-                        <button class="btn btn-secondary" onclick="exportLibraryDataCode()">?ì§ ?¢Á??åÊ≠•‰ª?¢º</button>
-                        <button class="btn btn-secondary" onclick="exportLibraryData()">?íæ ‰∏ãË?È°åÂ∫´Ê™îÊ?</button>
-                        <button class="btn btn-secondary" onclick="importLibraryDataCodePrompt()">?ì• ?ØÂÖ•È°åÂ∫´Ë≥áÊ?</button>
-                    </div>
-                    <div class="library-manager-grid" id="library-manager-list">
-                        <!-- Characters list for editor -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- 7. RPG Dungeon Screen -->
-            <section id="rpg-screen" class="screen">
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <h2 style="color: #ff4444; font-size: 2rem; text-shadow: 2px 2px 0 #000;">?îÔ? ?áËÄÖÂú∞‰∏ãÂ? ?îÔ?</h2>
-                    <p>ÁßªÂ??áËÄÖÂ??æÂØ∂ÁÆ±Ô??≠È??üÂ?È≠îÁâ©?ÇË??áÊï¢Á≠îÈ??äÊ??†ÂÄëÔ?</p>
-                </div>
-                
-                <div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start; max-width: 900px; margin: 0 auto;">
-                    <div id="rpg-grid" class="rpg-grid">
-                        <!-- Grid cells will be generated via JS -->
-                    </div>
-                    <div id="rpg-side-panel">
-                        <div class="rpg-controls">
-                            <button id="btn-up" class="rpg-btn" onclick="movePlayer(0, -1)">??/button>
-                            <div>
-                                <button id="btn-left" class="rpg-btn" onclick="movePlayer(-1, 0)">?Ä</button>
-                                <button id="btn-down" class="rpg-btn" onclick="movePlayer(0, 1)">??/button>
-                                <button id="btn-right" class="rpg-btn" onclick="movePlayer(1, 0)">??/button>
-                            </div>
-                        </div>
-                        <div style="margin-top: 2rem; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 10px; border: 2px solid var(--text-gold);">
-                            <h3 style="color: var(--text-gold); margin-bottom: 0.5rem;">‰ªªÂ??áÁ§∫</h3>
-                            <p>?ÆÊ?ÔºöËµ∞?∞ÂØ∂ÁÆ?<span style="font-size: 1.5rem;">??</span></p>
-                            <p>Ë∑Ø‰??ÉÈ??∞‰?Èªû‰∫Æ?ÑÊº¢Â≠?<span style="font-size: 1.5rem;">?ëπ</span><br>?ìÊ??†ÂÄëÂèØ‰ª•Á¢∫‰øùÂ??®Ô?</p>
-                            <p>?êÁ§∫ÔºöÁ??Ø‰??ÉË¢´?áÈÄÄ?îÔ?</p>
-                            <button class="btn btn-secondary" style="margin-top: 15px; width: 100%;" onclick="exitRPGMode()">?ÉË? (?æÊ??≤Â∫¶)</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <!-- 8. Puzzle Screen -->
-            <section id="puzzle-screen" class="screen">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <h2 style="color: var(--text-gold); font-size: 2.5rem;">?ß© ?®‰ª∂?ºÂ?Â§ßÊ????ß©</h2>
-                    <p style="font-size: 1.2rem;">Ë´ã‰?Ê≠?¢∫?ÑÂ∑¶??‰∏ä‰??ÜÂ?ÔºåÈ??ä‰??πÈÉ®‰ª∂Á??á‰??≤Êãº?ñÊ?Ôº?/p>
-                    <p id="puzzle-hint" style="color: #60a5fa; margin-top: 10px; font-weight: bold;"></p>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2rem;">
-                    <!-- Drop zone -->
-                    <div id="puzzle-drop-zone">
-                    </div>
-                    <!-- Source parts -->
-                    <div id="puzzle-parts" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                    </div>
-                    <!-- Controls -->
-                    <div style="display: flex; gap: 15px;">
-                        <button class="btn btn-secondary" onclick="resetPuzzle()">?ç‰?</button>
-                        <button class="btn" onclick="checkPuzzle()">ÂÆåÊ?Á¢∫Ë?Ôº?/button>
-                    </div>
-                    <div id="puzzle-feedback" style="font-size: 1.5rem; font-weight: bold; min-height: 2rem;"></div>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- Edit Character Modal -->
-    <div class="modal-overlay" id="edit-modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <span class="close-btn" onclick="closeEditModal()">&times;</span>
-            <h2 id="edit-modal-title" style="color: var(--text-gold); margin-bottom: 1.5rem;">Á∑®ËºØ?üÂ?</h2>
-            <form id="edit-char-form" onsubmit="saveCharacterEdit(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <div>
-                    <label>Êº¢Â?</label>
-                    <input type="text" name="char" id="edit-char-input" required maxlength="1">
-                    <label>Ê≥®Èü≥</label>
-                    <input type="text" name="zhuyin" id="edit-zhuyin-input" required>
-                    <label>Â∞èÂ≥∂ÔºàÈÉ®È¶ñÔ?</label>
-                    <select name="comp" id="edit-comp-input"></select>
-                    <label>Â≠∏Ê?Â≠∏ÊÆµ</label>
-                    <select name="grade" id="edit-grade-input"></select>
-                    <label>Ëß??</label>
-                    <textarea name="definition" id="edit-def-input" rows="2"></textarea>
-                </div>
-                <div>
-                    <label>?ÜËß£?®‰ª∂ (?óË??ÜÈ?)</label>
-                    <input type="text" name="breakdown" id="edit-break-input">
-                    <label>?®‰ª∂?èËºØ</label>
-                    <textarea name="logic" id="edit-logic-input" rows="2"></textarea>
-                    <label>Ë≠òÂ??Ö‰?</label>
-                    <textarea name="story" id="edit-story-input" rows="3"></textarea>
-                    <label>?†Ë? (?óË??ÜÈ?)</label>
-                    <input type="text" name="phrases" id="edit-phrase-input">
-                    <label>‰æãÂè•</label>
-                    <input type="text" name="sentence" id="edit-sent-input">
-                    <label>?ñÁ?Á∂≤Â??ñÊú¨Ê©ü‰???(?ØÈÅ∏)</label>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="text" name="image" id="edit-image-input" placeholder="?ØË≤º‰∏äÁ∂≤?Ä..." style="flex-grow: 1;" oninput="updateImagePreview()">
-                        <label for="edit-image-upload" class="btn btn-secondary" style="margin: 0; padding: 5px 10px; cursor: pointer;">‰∏äÂÇ≥Ê™îÊ?</label>
-                        <input type="file" id="edit-image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-                    </div>
-                    <div id="edit-image-preview-container" style="margin-top: 10px; display: none; text-align: center;">
-                        <img id="edit-image-preview" src="" style="max-height: 100px; border-radius: 8px;">
-                    </div>
-                </div>
-                <div style="grid-column: span 2; text-align: center; margin-top: 1rem;">
-                    <button type="submit" class="btn">?≤Â?‰øÆÊîπ</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">?ñÊ?</button>
-                    <button type="button" id="delete-char-btn" class="btn" style="background: #ef4444; color: white;">?™Èô§Â≠óË?</button>
-                </div>
-            </form>
+            <div class="stat-item" id="userName">ÂÜíÈö™ËÄÖ</div>
+            <button class="btn btn-secondary" onclick="showScreen('profile-screen'); renderProfile();" style="padding:5px 15px;font-size:0.8rem;background:var(--accent-purple);color:white;">üîÆ Á≤æÈùàÂç°</button>
+            <button class="btn btn-secondary" onclick="showCardBook()" style="padding:5px 15px;font-size:0.8rem;background:var(--accent-blue);color:white;">üìñ Â≠óÂç°ÂÜä</button>
+            <button class="btn btn-secondary" onclick="showEquipment()" style="padding:5px 15px;font-size:0.8rem;">üõ°Ô∏è Ë£ùÂÇô</button>
+            <button class="btn btn-secondary" onclick="showIntroManual()" style="padding:5px 15px;font-size:0.8rem;background:var(--primary-color);">üìú ÂÜíÈö™Êõ∏</button>
+            <button class="btn btn-secondary" onclick="exportStudentShareCode()" style="padding:5px 15px;font-size:0.8rem;background:#10b981;color:white;">üì§ ÂåØÂá∫ÈÄ≤Â∫¶</button>
+            <button class="btn btn-secondary" onclick="logout()" style="padding:5px 10px;font-size:0.8rem;">ÁôªÂá∫</button>
         </div>
-    </div>
-
-    <!-- Password Modal for Teacher -->
-    <div class="modal-overlay" id="password-modal">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <h2 style="color: var(--text-gold); margin-bottom: 1.5rem;">Â∞éÂ∏´Ë™çË?</h2>
-            <p style="margin-bottom: 1rem;">Ë´ãËº∏?•Â?Â∏´Â?Á¢º‰ª•?≤ÂÖ•‰∏≠ÊéßÂÆ?/p>
-            <input type="password" id="teacher-pwd-input" placeholder="ÂØÜÁ¢º" 
-                   style="width: 100%; padding: 12px; border-radius: 8px; background: #0f172a; color: white; border: 1px solid var(--text-gold); margin-bottom: 1.5rem; text-align: center;">
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn" onclick="checkTeacherPassword()">Á¢∫Ë??ªÂÖ•</button>
-                <button class="btn btn-secondary" onclick="closePasswordModal()">?ñÊ?</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Character Detail Modal -->
-    <div class="modal-overlay" id="char-modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div id="modal-body">
-                <!-- Dynamic Content -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Quiz Modal for Text/RPG Fight -->
-    <div class="modal-overlay" id="quiz-modal">
-        <div class="modal-content" style="text-align: center; max-width: 600px;">
-            <h2 id="quiz-question-title" style="color: #ff4444; margin-bottom: 2rem; font-size: 1.8rem; border-bottom: 2px solid #ff4444; padding-bottom: 10px;">?îÔ? ?∞È¨•Ê∏¨È?Ôº?/h2>
-            <div id="quiz-options" style="display: flex; flex-direction: column; gap: 1rem;">
-                <!-- Options will be generated here -->
-            </div>
-            <div id="quiz-feedback" style="margin-top: 1.5rem; font-weight: bold; min-height: 1.5rem; font-size: 1.2rem;"></div>
-        </div>
-    </div>
-
-    <!-- Game Intro Manual Modal -->
-    <div class="modal-overlay" id="intro-modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-btn" onclick="document.getElementById('intro-modal').style.display='none'">&times;</span>
-            <h2 style="color: var(--primary-color); margin-bottom: 1.5rem; text-align: center;">?? Â≠óÈÉ®‰ª∂Êé¢?™ÂÇ≥Ë™™Ô??íÈö™?ãÂ?</h2>
-            <div style="font-size: 1.1rem; line-height: 1.8; color: #e2e8f0; max-height: 60vh; overflow-y: auto; padding-right: 15px;">
-                <p>Ê≠°Ë?‰æÜÂà∞<strong>Â≠óÈÉ®‰ª∂Êé¢?™ÂÇ≥Ë™?/strong>ÔºÅÈÄôË£°?Ø‰??ãÂ?ÊªøÁ?Â•áÊº¢Â≠óÁ?ÂÆáÂ??Ç‰??ÑÁõÆÊ®ôÊòØ?¢Á¥¢?ÑÂÄã„ÄåÈÉ®‰ª∂Â?Â≥∂„ÄçÔ?‰øÆÂæ©‰∏¶Ê??°Ê??âÁ?Êº¢Â???/p>
-                <div style="margin: 1.5rem 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 4px solid var(--text-gold);">
-                    <h3 style="color: var(--text-gold); margin-bottom: 10px;">?? ?äÊà≤?©Ê?</h3>
-                    <ul>
-                        <li><strong>?∏Â?Â≥∂Ô?</strong>ÂæûÂú∞?ñ‰∏≠?≤ÂÖ•‰∏çÂ??ÑÈÉ®È¶ñÔ?ÊØîÂ?Ê∞¥ÈÉ®?ÅÊ??®Ô???/li>
-                        <li><strong>Â≠∏Êº¢Â≠óÔ?</strong>ÈªûÊ?Êº¢Â??±Ë?ÂÆÉÁ??åÂ??Ü„ÄçÂ??åË?Â≠óÊ?‰∫ã„Äç„Ä?/li>
-                        <li><strong>Â§ßÊ??∞Ô?</strong>Â≠∏Á?ÂÆåÂ?ÈªûÊ??åÊé•?óÊ??∞„ÄçÔ?Á≠îÂ?Ê∏¨È?Â∞±ËÉΩÈªû‰∫Æ?ôÂÄãÂ?Ôº?/li>
-                        <li><strong>Ë£ùÈ£æÂ≥∂Â∂ºÔº?/strong>?åÊè°Â≠óÂ?Ôºå‰??Ø‰ª•?´‰?ÂπÖÂ?Ôºå‰∏¶?äÂ??æÂú®‰Ω†Á??åÂ?Â±¨Â≥∂Â∂º„Äç‰???/li>
-                    </ul>
-                </div>
-                <div style="margin: 1.5rem 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 4px solid #f87171;">
-                    <h3 style="color: #f87171; margin-bottom: 10px;">?õ°Ô∏??íÈö™?πÂà•?úÂç°</h3>
-                    <p>ÊØèÁï∂‰Ω†Á¥ØÁ©çÈ?‰∫?<strong>5 ?ãÁ?Â≠?/strong>ÔºåÂ∞±?ÉËß∏?ºÈö±?èÁ??íÈö™?úÂç°ÔºÅÂú®?∞‰??é‰∏≠Â∞ãÊâæÂØ∂Áâ©?ÅË??ÜÈÄ†Ë??©Â?‰æÜÂø´?üÂ???XPÔº?/p>
-                </div>
-                <p style="text-align: center; margin-top: 2rem;">Ê∫ñÂ?Â•Ω‰??éÔ??áÊï¢?ÑÊé¢?™ËÄÖÔ??∫Áôº?ßÔ?</p>
-            </div>
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <button class="btn" onclick="document.getElementById('intro-modal').style.display='none'">?ëÁü•?ì‰?ÔºÅÈ?ÂßãÂ???/button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Word Formation Modal (New in 2.1) -->
-    <div class="modal-overlay" id="word-quiz-modal">
-        <div class="modal-content" style="max-width: 700px; padding: 2rem;">
-            <div class="word-quiz-box">
-                <div class="word-quiz-header">???ºÁèæ?íÈö™?©Â?ÔºÅË?ÂÆåÊ??†Ë?‰ª•Áç≤ÂæóÂ? ??/div>
-                <div class="word-main-char" id="word-quiz-main-char">Ê∞?/div>
-                <div class="word-slots" id="word-quiz-slots">
-                    <div class="puzzle-slot" style="border-style: solid; color: white;">Ê∞?/div>
-                    <div class="puzzle-slot" id="word-target-slot">?</div>
-                </div>
-                <div style="color: #94a3b8; margin-bottom: 1rem;">ÈªûÊ?‰∏ãÊñπÊ≠?¢∫?ÑÈÉ®‰ª∂Â??êÈÄ†Ë?Ôº?/div>
-                <div class="word-option-grid" id="word-quiz-options">
-                    <!-- Options generated by JS -->
-                </div>
-                <div id="word-quiz-feedback" style="margin-top: 1.5rem; font-size: 1.5rem; font-weight: bold; min-height: 2rem;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Equipment Modal (?áËÄÖË??? -->
-    <div class="modal-overlay" id="equipment-modal">
-        <div class="modal-content" style="max-width: 860px; padding: 0; overflow: hidden; border-radius: 20px;">
-            <!-- Header -->
-            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 1.5rem 2rem; border-bottom: 2px solid var(--text-gold); display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="color: var(--text-gold); font-size: 1.6rem; margin: 0;">?îÔ? ?áËÄÖË??ôÂ∫´</h2>
-                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">Ë£ùÂ?Âº∑Â?‰Ω†Á??íÈö™?áËÄÖÔ?Â±ïÁ§∫‰Ω†Á?Â≠∏Á??êÂ∞±Ôº?/p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="background: rgba(251,191,36,0.15); border: 1px solid var(--text-gold); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 1.2rem;">??</span>
-                        <span style="font-size: 1.1rem; font-weight: bold; color: var(--text-gold);" id="user-gems-count">0</span>
-                        <span style="font-size: 0.8rem; color: #94a3b8;">ÂØ∂Áü≥</span>
+    </header>
+    <main>
+        <!-- 1. Login Screen -->
+        <section id="login-screen" class="screen active">
+            <div class="login-container">
+                <h1>Ê≠°Ëøé‰æÜÂà∞Â≠óÈÉ®‰ª∂Êé¢Èö™ÂÇ≥Ë™™ÔºÅ</h1>
+                <div style="margin-bottom:2rem;">
+                    <input type="text" id="usernameInput" placeholder="Ëº∏ÂÖ•‰Ω†ÁöÑÂÜíÈö™‰ª£Ëôü"
+                           style="width:100%;padding:15px;border-radius:10px;background:rgba(255,255,255,0.1);color:white;border:2px solid var(--text-gold);font-size:1.1rem;margin-bottom:1rem;box-sizing:border-box;text-align:center;"
+                           onkeydown="if(event.key==='Enter') login('student')">
+                    <div style="display:flex;gap:10px;margin-bottom:1rem;justify-content:center;">
+                        <button class="btn btn-grade active" onclick="selectGrade('1A', this)">‰∏Ä‰∏ä</button>
+                        <button class="btn btn-grade" onclick="selectGrade('1B', this)">‰∏Ä‰∏ã</button>
+                        <button class="btn btn-grade" onclick="selectGrade('2A', this)">‰∫å‰∏ä</button>
+                        <button class="btn btn-grade" onclick="selectGrade('2B', this)">‰∫å‰∏ã</button>
                     </div>
-                    <span class="close-btn" onclick="closeEquipmentModal()" style="position: static; font-size: 1.8rem; line-height: 1; cursor: pointer; color: #94a3b8;">?</span>
+                    <button class="btn" onclick="login('student')" style="width:100%;">üöÄ ÈñãÂßãÂÜíÈö™</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <button class="btn btn-secondary" onclick="login('teacher')">ÊàëÊòØÂ∞éÂ∏´</button>
+                    <button class="btn btn-secondary" onclick="openStudentImportModal()" style="font-size:0.9rem;">üì• ÂåØÂÖ•ÊàëÁöÑÈÄ≤Â∫¶</button>
                 </div>
             </div>
-
-            <!-- Tab Navigation -->
-            <div style="display: flex; background: rgba(15,23,42,0.8); border-bottom: 1px solid #1e293b;">
-                <button id="eq-tab-avatar" onclick="switchEquipTab('avatar')" style="flex:1; padding: 12px; background: rgba(251,191,36,0.1); color: var(--text-gold); border: none; border-bottom: 3px solid var(--text-gold); cursor: pointer; font-size: 0.95rem; font-family: inherit;">?ó∫Ô∏??áËÄÖÂ?ËßÄ</button>
-                <button id="eq-tab-shop" onclick="switchEquipTab('shop')" style="flex:1; padding: 12px; background: transparent; color: #64748b; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 0.95rem; font-family: inherit;">?è™ Ë£ùÂ??ÜÂ?</button>
+        </section>
+        <!-- 2. Map Screen -->
+        <section id="map-screen" class="screen">
+            <div style="text-align:center;margin-bottom:2rem;">
+                <h2 style="color:var(--text-gold);font-size:2rem;">üó∫Ô∏è ÈÉ®‰ª∂Â§ßÈô∏</h2>
+                <p style="opacity:0.8;">ÈÅ∏Êìá‰∏ÄÂÄãÈÉ®‰ª∂Â≥∂Â∂ºÔºåÈñãÂßãÊé¢Á¥¢ÔºÅ</p>
             </div>
-
-            <!-- Avatar Tab -->
-            <div id="eq-panel-avatar" style="display: flex; gap: 0;">
-                <!-- Left: Hero Visualization -->
-                <div style="width: 280px; flex-shrink: 0; background: linear-gradient(180deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,1) 100%); padding: 1.5rem; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #1e293b;">
-                    <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Ë£ùÂ??êË¶Ω</p>
-                    <!-- Hero Avatar Display -->
-                    <div id="hero-avatar-display" style="position: relative; width: 160px; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                        <!-- Equipment slots around hero -->
-                        <div id="slot-head-display" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 2.5rem; text-align: center; opacity: 0.3; filter: grayscale(1);" title="?≠ÈÉ®Ë£ùÂ?">??</div>
-                        <!-- Hero body -->
-                        <div style="font-size: 5rem; margin-top: 30px; position: relative; z-index: 2;" id="hero-body-emoji">??</div>
-                        <div id="slot-weapon-display" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 2rem; opacity: 0.3; filter: grayscale(1);" title="Ê≠¶Âô®">?ó°Ô∏?/div>
-                        <div id="slot-shield-display" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 2rem; opacity: 0.3; filter: grayscale(1);" title="Ë≠∑Áõæ">?õ°Ô∏?/div>
-                        <div id="slot-boots-display" style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 2rem; opacity: 0.3; filter: grayscale(1);" title="?¥Â?">?ë¢</div>
-                        <div id="slot-cape-display" style="position: absolute; left: 5px; bottom: 20px; font-size: 1.8rem; opacity: 0.3; filter: grayscale(1);" title="?´È¢®">??</div>
-                        <div id="slot-ring-display" style="position: absolute; right: 5px; bottom: 20px; font-size: 1.8rem; opacity: 0.3; filter: grayscale(1);" title="?íÊ?">??</div>
-                    </div>
-                    <div id="hero-title-display" style="font-size: 0.9rem; color: var(--text-gold); text-align: center; margin-bottom: 0.5rem; min-height: 1.2em;"></div>
-                    <div id="hero-stats-display" style="width: 100%; font-size: 0.8rem; color: #64748b; text-align: center; line-height: 1.8;"></div>
-                </div>
-
-                <!-- Right: Equipment Slots List -->
-                <div style="flex: 1; padding: 1.5rem; max-height: 420px; overflow-y: auto; background: rgba(15,23,42,0.6);">
-                    <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Â∑≤Ë??ôÁ??©Â?</p>
-                    <div id="equipped-slots-list" style="display: flex; flex-direction: column; gap: 10px;">
-                        <!-- Filled by JS -->
-                    </div>
-                </div>
+            <div class="map-grid" id="area-map"></div>
+        </section>
+        <!-- 3. Library Screen -->
+        <section id="library-screen" class="screen">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;">
+                <button class="btn btn-secondary" onclick="showScreen('map-screen')">‚Üê ËøîÂõûÂú∞Âúñ</button>
+                <h2 id="area-title-display">Êé¢Á¥¢‰∏≠...</h2>
+                <div id="area-stats"></div>
             </div>
-
-            <!-- Shop Tab -->
-            <div id="eq-panel-shop" style="display: none; padding: 1.5rem; max-height: 420px; overflow-y: auto; background: rgba(15,23,42,0.6);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <p style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin: 0;">Ë£ùÂ??ÜÂ? ??‰ª•ÂØ∂?≥Ë≥ºË≤∑Âº∑?õË???/p>
-                    <div style="font-size: 0.75rem; color: #94a3b8;">?í° ÂØ∂Áü≥?ØÂú® RPG Ê®°Â??∂È?</div>
-                </div>
-                <div id="equipment-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;">
-                    <!-- Filled by JS -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Share Code Modal -->
-    <div class="modal-overlay" id="share-code-modal" style="display:none;">
-        <div class="modal-content" style="max-width: 500px; text-align: center;">
-            <span class="close-btn" onclick="document.getElementById('share-code-modal').style.display='none'">?</span>
-            <h2 id="share-code-title" style="color: var(--text-gold); margin-bottom: 1rem;">?ì§ ?ëÁ??≤Â∫¶‰ª?¢º</h2>
-            <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem;">Ë§áË£Ω?ô‰∏≤‰ª?¢ºÔºå‰∫§Áµ¶ËÄÅÂ∏´?ñÂú®?¶‰??∞Ë?ÁΩÆ‰?‰ΩøÁî®Ôº?/p>
-            <textarea id="share-code-output" rows="4" style="width: 100%; background: #0f172a; color: #e2e8f0; border: 1px solid var(--text-gold); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.75rem; resize: none;" readonly></textarea>
-            <button id="share-code-copy-btn" class="btn" onclick="copyShareCode()" style="margin-top: 1rem;">?? Ë§áË£Ω‰ª?¢º</button>
-        </div>
-    </div>
-
-    <!-- Student Import Modal -->
-    <div class="modal-overlay" id="student-import-modal" style="display:none;">
-        <div class="modal-content" style="max-width: 500px; text-align: center;">
-            <span class="close-btn" onclick="document.getElementById('student-import-modal').style.display='none'">?</span>
-            <h2 style="color: var(--text-gold); margin-bottom: 1rem;">?ì• ?ØÂÖ•?≤Â∫¶‰ª?¢º</h2>
-            <p style="margin-bottom: 1rem; color: #94a3b8;">Ë´ãË≤º‰∏äÂ≠∏?üÁî¢?üÁ??†Â?‰ª?¢ºÔº?/p>
-            <textarea id="teacher-import-code" placeholder="?®Ê≠§Ë≤º‰?‰ª?¢º..." 
-                      style="width: 100%; height: 150px; padding: 10px; border-radius: 8px; background: #0f172a; color: #4ade80; border: 1px solid var(--text-gold); font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem;"></textarea>
-            <div id="import-feedback" style="margin-bottom: 1rem; font-weight: bold; min-height: 1.5rem;"></div>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn" onclick="importStudentFromCode()">Á¢∫Ë??ØÂÖ•</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('student-import-modal').style.display='none'">?ñÊ?</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Library Import Modal -->
-    <div class="modal-overlay" id="library-import-modal" style="display:none;">
-        <div class="modal-content" style="max-width: 550px; text-align: center;">
-            <span class="close-btn" onclick="document.getElementById('library-import-modal').style.display='none'">?</span>
-            <h2 style="color: var(--text-gold); margin-bottom: 1rem;">?ì• ?ØÂÖ•È°åÂ∫´Ë≥áÊ?</h2>
-            
-            <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--accent-blue); margin-bottom: 1.5rem;">
-                <p style="margin-bottom: 1rem; font-weight: bold;">?πÊ? AÔºö‰??≥È?Â∫´Ê?Ê°?(?ÄÁ©©Â?)</p>
-                <input type="file" id="library-file-input" accept=".json,.js" style="margin-bottom: 1rem; color: #94a3b8;">
-                <br>
-                <button class="btn" onclick="processLibraryFileImport()" style="background: var(--accent-blue); color: white;">?? ?ØÂÖ•Ê™îÊ?</button>
-            </div>
-
-            <div style="border-top: 1px solid #334155; padding-top: 1.5rem;">
-                <p style="margin-bottom: 1rem; font-weight: bold;">?πÊ? BÔºöË≤º?•Â?Ê≠•‰ª£Á¢?(?©Â?Â∞ëÈ??áÂ?)</p>
-                <textarea id="library-import-input" rows="5" style="width: 100%; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.75rem; resize: vertical;" placeholder="Ë´ãÂú®Ê≠§Ë≤º‰∏ä‰ª£Á¢?.."></textarea>
-                <button class="btn" onclick="processLibraryImport()" style="margin-top: 1rem; background: #334155; color: white;">?? Ë≤º‰?‰ª?¢º?ØÂÖ•</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Device Switcher (New in 2.1) -->
-</html>
+            <div class="character-grid" id="char-list"></div>
+        </section>
