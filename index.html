@@ -46,8 +46,12 @@
                 </div>
                 <div class="stat-item" id="userName">冒險者</div>
                 <button class="btn btn-secondary" onclick="showScreen('profile-screen'); renderProfile();" style="padding: 5px 15px; font-size: 0.8rem; background: var(--accent-purple); color: white;">👤 精靈狀態</button>
+                <button class="btn btn-secondary" onclick="showEquipment()"><lucide-icon name="shield"></lucide-icon> 勇者裝備</button>
                 <button class="btn btn-secondary" onclick="showCardBook()" style="padding: 5px 15px; font-size: 0.8rem; background: var(--accent-blue); color: white;">🎴 字卡圖鑑</button>
-                <button class="btn btn-secondary" onclick="exportStudentShareCode()" style="padding: 5px 15px; font-size: 0.8rem; background: #10b981; color: white;">📤 分享進度</button>
+                <div class="stat-item" style="color: #fbbf24; font-weight: bold;">
+                    <span>💎</span> <span id="top-bar-gems">0</span>
+                </div>
+                <button class="btn btn-secondary" onclick="exportStudentShareCode()" style="padding: 5px 15px; font-size: 0.8rem; background: #10b981; color: white;">📤 匯出進度</button>
                 <button class="btn btn-secondary" onclick="showIntroManual()" style="padding: 5px 15px; font-size: 0.8rem; background: var(--primary-color);">📖 冒險手冊</button>
                 <button class="btn btn-secondary" onclick="logout()" style="padding: 5px 10px; font-size: 0.8rem;">離開</button>
             </div>
@@ -71,8 +75,9 @@
                     </div>
 
                     <button class="btn" onclick="login('student')" style="width: 100%;">開始冒險</button>
-                    <div style="margin-top: 1rem;">
+                    <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
                         <button class="btn btn-secondary" onclick="login('teacher')">我是導師</button>
+                        <button class="btn btn-secondary" onclick="openStudentImportModal()" style="font-size: 0.9rem;">📥 匯入我的進度</button>
                     </div>
                 </div>
             </section>
@@ -188,6 +193,7 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-secondary" onclick="showTeacherSection('stats')">學生狀態</button>
                         <button class="btn" onclick="showTeacherSection('library')">字庫管理</button>
+                        <button class="btn btn-secondary" onclick="openStudentImportModal()">📥 匯入學生資料</button>
                         <button class="btn btn-secondary" onclick="logout()">登出</button>
                     </div>
                 </div>
@@ -210,17 +216,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Teacher Import Code Section -->
-                    <div style="margin-top: 2rem; background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 15px; border: 1px solid #10b981;">
-                        <h3 style="color: #10b981; margin-bottom: 1rem;">📥 匯入其他裝置的學生進度</h3>
-                        <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem;">請學生點擊上方導覽列的「📤 分享進度」，複製代碼後貼入下方：</p>
-                        <div style="display: flex; gap: 10px;">
-                            <textarea id="teacher-import-code" rows="3" placeholder="貼入學生的進度代碼..." style="flex: 1; padding: 10px; border-radius: 8px; background: #0f172a; color: white; border: 1px solid #10b981; font-size: 0.85rem; resize: vertical;"></textarea>
-                            <button class="btn" onclick="importStudentFromCode()" style="background: #10b981; color: white; align-self: flex-end; padding: 10px 20px;">✅ 匯入</button>
-                        </div>
-                        <div id="import-feedback" style="margin-top: 10px; font-weight: bold; min-height: 1.5rem;"></div>
-                    </div>
                 </div>
 
                 <div id="teacher-library-section" style="display: none;">
@@ -228,7 +223,9 @@
                         <input type="text" id="libSearchInput" placeholder="搜尋漢字..." oninput="renderLibraryManager()"
                                style="flex-grow: 1; padding: 12px; border-radius: 8px; background: #334155; color: white; border: 1px solid var(--text-gold);">
                         <button class="btn" onclick="openEditModal(null)">✨ 新增生字</button>
-                        <button class="btn btn-secondary" onclick="exportLibraryData()">💾 匯出資料代碼</button>
+                        <button class="btn btn-secondary" onclick="exportLibraryDataCode()">📤 產生同步代碼</button>
+                        <button class="btn btn-secondary" onclick="exportLibraryData()">💾 下載題庫檔案</button>
+                        <button class="btn btn-secondary" onclick="importLibraryDataCodePrompt()">📥 匯入題庫資料</button>
                     </div>
                     <div class="library-manager-grid" id="library-manager-list">
                         <!-- Characters list for editor -->
@@ -375,21 +372,6 @@
         </div>
     </div>
 
-    <!-- Student Share Code Modal -->
-    <div class="modal-overlay" id="share-code-modal">
-        <div class="modal-content" style="max-width: 550px; text-align: center;">
-            <span class="close-btn" onclick="document.getElementById('share-code-modal').style.display='none'">&times;</span>
-            <h2 style="color: #10b981; margin-bottom: 1rem;">📤 我的進度分享碼</h2>
-            <p style="color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.95rem;">複製下方代碼，傳給老師貼入「教師中控室」，老師就能在自己的電腦上看到你的進度！</p>
-            <textarea id="share-code-output" rows="6" readonly
-                      style="width: 100%; padding: 12px; border-radius: 8px; background: #0f172a; color: #4ade80; border: 1px solid #10b981; font-size: 0.75rem; word-break: break-all; resize: none; font-family: monospace;"></textarea>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 1.5rem;">
-                <button id="share-code-copy-btn" class="btn" onclick="copyShareCode()" style="background: #10b981;">📋 複製代碼</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('share-code-modal').style.display='none'">關閉</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Character Detail Modal -->
     <div class="modal-overlay" id="char-modal">
         <div class="modal-content">
@@ -458,6 +440,122 @@
         </div>
     </div>
 
+    <!-- Equipment Modal (勇者裝備) -->
+    <div class="modal-overlay" id="equipment-modal">
+        <div class="modal-content" style="max-width: 860px; padding: 0; overflow: hidden; border-radius: 20px;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 1.5rem 2rem; border-bottom: 2px solid var(--text-gold); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="color: var(--text-gold); font-size: 1.6rem; margin: 0;">⚔️ 勇者裝備庫</h2>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">裝備強化你的冒險勇者，展示你的學習成就！</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="background: rgba(251,191,36,0.15); border: 1px solid var(--text-gold); border-radius: 20px; padding: 6px 16px; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 1.2rem;">💎</span>
+                        <span style="font-size: 1.1rem; font-weight: bold; color: var(--text-gold);" id="user-gems-count">0</span>
+                        <span style="font-size: 0.8rem; color: #94a3b8;">寶石</span>
+                    </div>
+                    <span class="close-btn" onclick="closeEquipmentModal()" style="position: static; font-size: 1.8rem; line-height: 1; cursor: pointer; color: #94a3b8;">×</span>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div style="display: flex; background: rgba(15,23,42,0.8); border-bottom: 1px solid #1e293b;">
+                <button id="eq-tab-avatar" onclick="switchEquipTab('avatar')" style="flex:1; padding: 12px; background: rgba(251,191,36,0.1); color: var(--text-gold); border: none; border-bottom: 3px solid var(--text-gold); cursor: pointer; font-size: 0.95rem; font-family: inherit;">🗺️ 勇者外觀</button>
+                <button id="eq-tab-shop" onclick="switchEquipTab('shop')" style="flex:1; padding: 12px; background: transparent; color: #64748b; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 0.95rem; font-family: inherit;">🏪 裝備商店</button>
+            </div>
+
+            <!-- Avatar Tab -->
+            <div id="eq-panel-avatar" style="display: flex; gap: 0;">
+                <!-- Left: Hero Visualization -->
+                <div style="width: 280px; flex-shrink: 0; background: linear-gradient(180deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,1) 100%); padding: 1.5rem; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #1e293b;">
+                    <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">裝備預覽</p>
+                    <!-- Hero Avatar Display -->
+                    <div id="hero-avatar-display" style="position: relative; width: 160px; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                        <!-- Equipment slots around hero -->
+                        <div id="slot-head-display" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 2.5rem; text-align: center; opacity: 0.3; filter: grayscale(1);" title="頭部裝備">👑</div>
+                        <!-- Hero body -->
+                        <div style="font-size: 5rem; margin-top: 30px; position: relative; z-index: 2;" id="hero-body-emoji">🧙</div>
+                        <div id="slot-weapon-display" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 2rem; opacity: 0.3; filter: grayscale(1);" title="武器">🗡️</div>
+                        <div id="slot-shield-display" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 2rem; opacity: 0.3; filter: grayscale(1);" title="護盾">🛡️</div>
+                        <div id="slot-boots-display" style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 2rem; opacity: 0.3; filter: grayscale(1);" title="靴子">👢</div>
+                        <div id="slot-cape-display" style="position: absolute; left: 5px; bottom: 20px; font-size: 1.8rem; opacity: 0.3; filter: grayscale(1);" title="披風">🌀</div>
+                        <div id="slot-ring-display" style="position: absolute; right: 5px; bottom: 20px; font-size: 1.8rem; opacity: 0.3; filter: grayscale(1);" title="戒指">💍</div>
+                    </div>
+                    <div id="hero-title-display" style="font-size: 0.9rem; color: var(--text-gold); text-align: center; margin-bottom: 0.5rem; min-height: 1.2em;"></div>
+                    <div id="hero-stats-display" style="width: 100%; font-size: 0.8rem; color: #64748b; text-align: center; line-height: 1.8;"></div>
+                </div>
+
+                <!-- Right: Equipment Slots List -->
+                <div style="flex: 1; padding: 1.5rem; max-height: 420px; overflow-y: auto; background: rgba(15,23,42,0.6);">
+                    <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">已裝備的物品</p>
+                    <div id="equipped-slots-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Tab -->
+            <div id="eq-panel-shop" style="display: none; padding: 1.5rem; max-height: 420px; overflow-y: auto; background: rgba(15,23,42,0.6);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <p style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin: 0;">裝備商店 — 以寶石購買強力裝備</p>
+                    <div style="font-size: 0.75rem; color: #94a3b8;">💡 寶石可在 RPG 模式收集</div>
+                </div>
+                <div id="equipment-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Code Modal -->
+    <div class="modal-overlay" id="share-code-modal" style="display:none;">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <span class="close-btn" onclick="document.getElementById('share-code-modal').style.display='none'">×</span>
+            <h2 id="share-code-title" style="color: var(--text-gold); margin-bottom: 1rem;">📤 我的進度代碼</h2>
+            <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem;">複製這串代碼，交給老師或在另一台裝置上使用！</p>
+            <textarea id="share-code-output" rows="4" style="width: 100%; background: #0f172a; color: #e2e8f0; border: 1px solid var(--text-gold); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.75rem; resize: none;" readonly></textarea>
+            <button id="share-code-copy-btn" class="btn" onclick="copyShareCode()" style="margin-top: 1rem;">📋 複製代碼</button>
+        </div>
+    </div>
+
+    <!-- Student Import Modal -->
+    <div class="modal-overlay" id="student-import-modal" style="display:none;">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <span class="close-btn" onclick="document.getElementById('student-import-modal').style.display='none'">×</span>
+            <h2 style="color: var(--text-gold); margin-bottom: 1rem;">📥 匯入進度代碼</h2>
+            <p style="margin-bottom: 1rem; color: #94a3b8;">請貼上學生產生的加密代碼：</p>
+            <textarea id="teacher-import-code" placeholder="在此貼上代碼..." 
+                      style="width: 100%; height: 150px; padding: 10px; border-radius: 8px; background: #0f172a; color: #4ade80; border: 1px solid var(--text-gold); font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem;"></textarea>
+            <div id="import-feedback" style="margin-bottom: 1rem; font-weight: bold; min-height: 1.5rem;"></div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" onclick="importStudentFromCode()">確認匯入</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('student-import-modal').style.display='none'">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Library Import Modal -->
+    <div class="modal-overlay" id="library-import-modal" style="display:none;">
+        <div class="modal-content" style="max-width: 550px; text-align: center;">
+            <span class="close-btn" onclick="document.getElementById('library-import-modal').style.display='none'">×</span>
+            <h2 style="color: var(--text-gold); margin-bottom: 1rem;">📥 匯入題庫資料</h2>
+            
+            <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--accent-blue); margin-bottom: 1.5rem;">
+                <p style="margin-bottom: 1rem; font-weight: bold;">方法 A：上傳題庫檔案 (最穩定)</p>
+                <input type="file" id="library-file-input" accept=".json,.js" style="margin-bottom: 1rem; color: #94a3b8;">
+                <br>
+                <button class="btn" onclick="processLibraryFileImport()" style="background: var(--accent-blue); color: white;">📁 匯入檔案</button>
+            </div>
+
+            <div style="border-top: 1px solid #334155; padding-top: 1.5rem;">
+                <p style="margin-bottom: 1rem; font-weight: bold;">方法 B：貼入同步代碼 (適合少量文字)</p>
+                <textarea id="library-import-input" rows="5" style="width: 100%; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.75rem; resize: vertical;" placeholder="請在此貼上代碼..."></textarea>
+                <button class="btn" onclick="processLibraryImport()" style="margin-top: 1rem; background: #334155; color: white;">🚀 貼上代碼匯入</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Device Switcher (New in 2.1) -->
     <div class="device-switcher">
         <button class="device-btn" id="btn-device-mobile" onclick="setDeviceMode('mobile')" title="手機模式">📱</button>
@@ -465,8 +563,2533 @@
         <button class="device-btn active" id="btn-device-pc" onclick="setDeviceMode('pc')" title="電腦模式">💻</button>
     </div>
 
-    <script src="data.js"></script>
-    <script src="app.js"></script>
+    <script>
+const libraryData = {
+  grades: [
+    { id: "1A", name: "一上" },
+    { id: "1B", name: "一下" },
+    { id: "2A", name: "二上" },
+    { id: "2B", name: "二下" }
+  ],
+  components: [
+    { id: "woman", symbol: "女", name: "女子之閣", meaning: "與女性、親屬有關", color: "#f472b6", theme: "pink-garden" },
+    { id: "hand", symbol: "手", name: "工匠之坊", meaning: "與手部動作有關", color: "#fb923c", theme: "workshop" },
+    { id: "person", symbol: "人", name: "英雄聖域", meaning: "與人類行為有關", color: "#a855f7", theme: "sky-temple" },
+    { id: "mouth", symbol: "口", name: "言之靈壇", meaning: "與嘴巴動作有關", color: "#ef4444", theme: "echo-cave" },
+    { id: "water", symbol: "水", name: "水之神殿", meaning: "與液體、流動有關", color: "#3b82f6", theme: "ocean-bubbles" },
+    { id: "wood", symbol: "木", name: "木之森林", meaning: "與樹木、植物有關", color: "#10b981", theme: "forest-leaves" },
+    { id: "foot", symbol: "足", name: "征途之徑", meaning: "與腳部動作有關", color: "#78350f", theme: "earth-trail" },
+    { id: "heart", symbol: "心", name: "心靈之閣", meaning: "與情感、思考有關", color: "#ec4899", theme: "love-cloud" },
+    { id: "speech", symbol: "言", name: "真言之塔", meaning: "與語言、記錄有關", color: "#6366f1", theme: "magic-library" },
+    { id: "grass", symbol: "艸", name: "草本奇境", meaning: "與草本、花卉有關", color: "#22c55e", theme: "wildflower" },
+    { id: "silk", symbol: "糸", name: "絲綢之路", meaning: "與細線、編織有關", color: "#d946ef", theme: "loom-palace" },
+    { id: "insect", symbol: "虫", name: "蟲鳴之里", meaning: "與昆蟲、節肢動物有關", color: "#84cc16", theme: "bug-meadow" },
+    { id: "sun", symbol: "日", name: "時光神殿", meaning: "與光影、時間有關", color: "#eab308", theme: "solar-temple" },
+    { id: "gate", symbol: "門", name: "禁忌之門", meaning: "與出入口、封閉有關", color: "#64748b", theme: "iron-gate" },
+    { id: "rain", symbol: "雨", name: "雨幕之廊", meaning: "與氣候、水氣有關", color: "#0ea5e9", theme: "rain-mist" },
+    { id: "bird", symbol: "鳥", name: "蒼穹之巢", meaning: "與鳥類、飛翔有關", color: "#94a3b8", theme: "sky-nest" },
+    { id: "extra", symbol: "➕", name: "傳說補充", meaning: "其他有趣的文字", color: "#334155", theme: "star-void" }
+  ],
+  characters: {
+    // 1. 女部 (9 個)
+    "好": { grade: "1A", zhuyin: "ㄏㄠˇ", comp: "woman", structure: "left-right", vocab: ["好人", "美好", "你好"], definition: "美好、優良。與「壞」相對。", phrases: ["好人", "美好", "好處"], sentence: "這是一本非常好看的故事書。", breakdown: ["女", "子"], logic: "媽媽帶孩子。", story: "口訣：女加子，真美好，大家快樂樂逍遙！" },
+    "媽": { grade: "1B", zhuyin: "ㄇㄚ", comp: "woman", structure: "left-right", vocab: ["媽媽", "姑媽", "姨媽"], definition: "對母親的稱呼。", phrases: ["媽媽", "姑媽"], sentence: "媽媽每天辛苦煮飯給我們吃。", breakdown: ["女", "馬"], logic: "女性家庭成員。", story: "口訣：這個女人（女）為了家，就像馬兒（馬）一樣勤奮。" },
+    "姐": { grade: "1B", zhuyin: "ㄐㄧㄝˇ", comp: "woman", structure: "left-right", vocab: ["姐姐", "姐妹", "大姐"], definition: "稱呼比自己先出生的同輩女性。", phrases: ["姐姐", "姐妹", "大姐"], sentence: "姐姐唱歌非常痛快好聽。", breakdown: ["女", "且"], logic: "年長女性成員。", story: "口訣：比自己年長的女孩（女），而且（且）總是很照顧我。" },
+    "妹": { grade: "1B", zhuyin: "ㄇㄟˋ", comp: "woman", structure: "left-right", vocab: ["妹妹", "兄妹", "姊妹"], definition: "稱呼比自己後出生的同輩女性。", phrases: ["妹妹", "兄妹"], sentence: "妹妹在客廳開心地玩著洋娃娃。", breakdown: ["女", "未"], logic: "未長大的女孩。", story: "口訣：還未（未）完全長大的女孩（女），就是可愛的妹妹。" },
+    "她": { grade: "1B", zhuyin: "ㄊㄚ", comp: "woman", structure: "left-right", vocab: ["她們", "她的", "他她"], definition: "女性的第三人稱代稱。", phrases: ["她們", "她的"], sentence: "她是我們班上新來的女同學。", breakdown: ["女", "也"], logic: "指女性的代名詞。", story: "口訣：指著那女孩，說一句『（女）生（也）會很厲害的』。" },
+    "奶": { grade: "2A", zhuyin: "ㄋㄞˇ", comp: "woman", structure: "left-right", vocab: ["奶奶", "奶粉", "牛奶"], definition: "稱呼父親的母親。", phrases: ["奶奶", "奶粉"], sentence: "奶奶每天傍晚都會去公園散步。", breakdown: ["女", "乃"], logic: "養育後代的長輩。", story: "口訣：女孩（女）長大生孩乃（乃）為人母，就成了奶奶。" },
+    "妙": { grade: "2B", zhuyin: "ㄇㄧㄠˋ", comp: "woman", structure: "left-right", vocab: ["美妙", "奇妙", "巧妙"], definition: "奇特、非常美好。", phrases: ["美妙", "奇妙", "巧妙"], sentence: "天空的雲朵變化真奇妙。", breakdown: ["女", "少"], logic: "少女姿態優美。", story: "口訣：少（少）女（女）的姿態與心思，總是讓人感到奇妙。" },
+    "姑": { grade: "2B", zhuyin: "ㄍㄨ", comp: "woman", structure: "left-right", vocab: ["姑姑", "姑媽", "小姑"], definition: "稱呼父親的姊妹。", phrases: ["姑姑", "姑媽"], sentence: "假日的時候，姑姑會來我們家玩耍。", breakdown: ["女", "古"], logic: "父系女性長輩。", story: "口訣：爸爸的姐妹像古（古）老時代流傳下來的守護女（女）神。" },
+    "娘": { grade: "2B", zhuyin: "ㄋㄧㄤˊ", comp: "woman", structure: "left-right", vocab: ["姑娘", "娘親", "伴娘"], definition: "對女性的通稱或對母親的稱呼。", phrases: ["姑娘", "娘親"], sentence: "古裝劇裡常聽到稱呼年輕女子為姑娘。", breakdown: ["女", "良"], logic: "優質的女性。", story: "口訣：善（良）的好女孩（女），真是個好姑娘。" },
+
+    // 2. 手部 (26 個)
+    "手": { grade: "1B", zhuyin: "ㄕㄡˇ", comp: "hand", structure: "single", vocab: ["雙手", "手指", "招手"], definition: "人體的上肢。", phrases: ["雙手", "手指", "招手"], sentence: "飯前洗手是保持健康的好習慣。", breakdown: ["手"], logic: "象形文字，像人的五根手指。", story: "口訣：伸出五根小指頭，萬能雙手真好用。" },
+    "招": { grade: "1B", zhuyin: "ㄓㄠ", comp: "hand", structure: "left-right", vocab: ["招手", "招呼", "招待"], definition: "揮手叫人來。", phrases: ["招手", "招呼", "招待"], sentence: "老師笑著向我們招手，要我們過去。", breakdown: ["扌", "召"], logic: "用手呼喚人來。", story: "口訣：用手（扌）大聲召（召）喚好朋友一起來玩。" },
+    "找": { grade: "1B", zhuyin: "ㄓㄠˇ", comp: "hand", structure: "left-right", vocab: ["尋找", "找尋", "找到"], definition: "尋求、想要發現。", phrases: ["尋找", "找尋", "找到"], sentence: "我在房間裡仔細尋找不見的橡皮擦。", breakdown: ["扌", "戈"], logic: "拿著武器動手找尋。", story: "口訣：用手（扌）拿著長戈（戈）到處翻找東西。" },
+    "拍": { grade: "1B", zhuyin: "ㄆㄞ", comp: "hand", structure: "left-right", vocab: ["拍手", "拍照", "拍打"], definition: "用手掌輕輕擊打。", phrases: ["拍手", "拍照", "拍打"], sentence: "大家聽完精彩的演講後一起開心拍手。", breakdown: ["扌", "白"], logic: "手掌露出白掌心擊打。", story: "口訣：雙手（扌）擊打露出白白（白）的掌心，發出拍拍聲。" },
+    "拿": { grade: "1B", zhuyin: "ㄋㄚˊ", comp: "hand", structure: "top-bottom", vocab: ["拿走", "拿手", "拿取"], definition: "用手把東西握住或取過來。", phrases: ["拿走", "拿手", "拿錢"], sentence: "請幫我把那本書拿過來好嗎？", breakdown: ["合", "手"], logic: "雙手合力握住東西。", story: "口訣：把東西合（合）起來緊緊握在雙手（手）裡就是拿。" },
+    "幫": { grade: "1B", zhuyin: "ㄅㄤ", comp: "hand", structure: "top-bottom", vocab: ["幫忙", "幫助", "幫手"], definition: "給予別人協助。", phrases: ["幫忙", "幫助", "幫手"], sentence: "我常常幫媽媽掃地整理客廳。", breakdown: ["邦", "巾"], logic: "提供協助。", story: "口訣：大家在國家（邦）裡繫著毛巾（巾）努力工作互相幫忙。" },
+    "拉": { grade: "1B", zhuyin: "ㄌㄚ", comp: "hand", structure: "left-right", vocab: ["拉開", "拉手", "拉力"], definition: "牽引、用力扯。", phrases: ["拉開", "拉手", "拉力"], sentence: "我用力把沉重的木門拉開了。", breakdown: ["扌", "立"], logic: "動手讓物立起或牽動。", story: "口訣：用手（扌）把原本倒下的人拉到站立（立）起來。" },
+    "推": { grade: "1B", zhuyin: "ㄊㄨㄟ", comp: "hand", structure: "left-right", vocab: ["推開", "推車", "推動"], definition: "用力往前使物體移動。", phrases: ["推開", "推車", "推動"], sentence: "請用力推開這扇笨重的大門。", breakdown: ["扌", "隹"], logic: "手往前推移。", story: "口訣：用手（扌）輕輕推一下那隻小鳥（隹），讓牠飛走。" },
+    "把": { grade: "1B", zhuyin: "ㄅㄚˇ", comp: "hand", structure: "left-right", vocab: ["一把", "把握", "門把"], definition: "用手握住或抓住。", phrases: ["一把", "把握", "門把"], sentence: "我抓緊門把用力一轉，門就開了。", breakdown: ["扌", "巴"], logic: "緊緊握在手裡。", story: "口訣：用手（扌）把東西像蛇（巴）一樣緊緊纏住握緊。" },
+    "抓": { grade: "2A", zhuyin: "ㄓㄨㄚ", comp: "hand", structure: "left-right", vocab: ["抓緊", "捉抓", "抓住"], definition: "手指收縮用力扣住東西。", phrases: ["抓緊", "捉抓", "抓住"], sentence: "小狗開心地抓住了天上掉下來的飛盤。", breakdown: ["扌", "爪"], logic: "手像鳥爪一般抓取。", story: "口訣：手（扌）指變成像鳥爪（爪）一樣，緊緊把東西扣住。" },
+    "搶": { grade: "2A", zhuyin: "ㄑㄧㄤˇ", comp: "hand", structure: "left-right", vocab: ["爭搶", "搶奪", "搶先"], definition: "強行奪取。", phrases: ["爭搶", "搶奪", "搶先"], sentence: "同學之間要互相禮讓，不要搶別人的玩具。", breakdown: ["扌", "倉"], logic: "手伸向穀倉奪取物資。", story: "口訣：強盜用手（扌）跑到糧倉（倉）爭奪食物，真是壞行為。" },
+    "接": { grade: "2A", zhuyin: "ㄐㄧㄝ", comp: "hand", structure: "left-right", vocab: ["接受", "接住", "迎接"], definition: "迎來、承受或托住。", phrases: ["接受", "接住", "迎接"], sentence: "弟弟靈活地接住了我丟過去的棒球。", breakdown: ["扌", "妾"], logic: "伸出手去迎接。", story: "口訣：伸出雙手（扌）站立（立）在女人（女）前，迎接客人來。" },
+    "搖": { grade: "2A", zhuyin: "ㄧㄠˊ", comp: "hand", structure: "left-right", vocab: ["搖頭", "搖晃", "動搖"], definition: "擺動。", phrases: ["搖頭", "搖晃", "動搖"], sentence: "樹葉在微風中輕輕搖晃。", breakdown: ["扌", "傜"], logic: "手拿物體擺盪。", story: "口訣：小狗用手（扌）和身體開心地搖著尾巴跳舞。" },
+    "撥": { grade: "2A", zhuyin: "ㄅㄛ", comp: "hand", structure: "left-right", vocab: ["撥開", "撥打", "活潑"], definition: "用手或棍棒推開。", phrases: ["撥開", "撥打", "活潑"], sentence: "請輕輕撥開草叢，看看裡面是不是有小昆蟲。", breakdown: ["扌", "發"], logic: "手像箭發射般向兩旁推。", story: "口訣：雙手（扌）像發（發）射弓箭一樣把雜草堆往旁邊分開。" },
+    "指": { grade: "2A", zhuyin: "ㄓˇ", comp: "hand", structure: "left-right", vocab: ["指向", "手指", "指出"], definition: "手的前端部份，或向著某個方向。", phrases: ["指向", "手指", "指出"], sentence: "老師指著黑板上的文字，教我們如何閱讀。", breakdown: ["扌", "旨"], logic: "手指出正確的意旨目標。", story: "口訣：用手（扌）指出聖旨（旨）上的名字，大家都看見了。" },
+    "甩": { grade: "2B", zhuyin: "ㄕㄨㄞˇ", comp: "hand", structure: "top-bottom", vocab: ["甩開", "甩掉", "甩手"], definition: "揮動並用力拋開。", phrases: ["甩開", "甩掉", "甩手"], sentence: "洗完手後不要亂甩，以免水滴到別人身上。", breakdown: ["爪", "用"], logic: "用盡手勁讓物脫離。", story: "口訣：用（用）鳥爪（爪）一樣的手勁用力把水珠揮走。" },
+    "提": { grade: "2B", zhuyin: "ㄊㄧˊ", comp: "hand", structure: "left-right", vocab: ["提燈", "提起", "手提"], definition: "懸空拿著或拿在手上。", phrases: ["提燈", "提起", "手提"], sentence: "爸爸提著沉重的行李箱走進了火車站。", breakdown: ["扌", "是"], logic: "手把東西拎正提引。", story: "口訣：正確的（是）做法就是用手（扌）穩穩地把東西拿著。" },
+    "擔": { grade: "2B", zhuyin: "ㄉㄢ", comp: "hand", structure: "left-right", vocab: ["負擔", "擔保", "承擔"], definition: "用肩膀挑東西或承擔責任。", phrases: ["負擔", "擔保", "承擔"], sentence: "我們長大後要學會承擔更多的責任。", breakdown: ["扌", "詹"], logic: "手肩承擔重荷。", story: "口訣：用手（扌）挑起沉重的竹擔，是很大的負擔。" },
+    "扭": { grade: "2B", zhuyin: "ㄋㄧㄡˇ", comp: "hand", structure: "left-right", vocab: ["扭轉", "扭動", "扭傷"], definition: "轉動、旋轉。", phrases: ["扭轉", "扭動", "扭傷"], sentence: "出門前記得把水龍頭扭緊，才不會浪費水。", breakdown: ["扌", "丑"], logic: "用手轉動像打結的醜態。", story: "口訣：手（扌）指像小丑（丑）一樣轉呀轉地做出有趣動作。" },
+    "換": { grade: "2B", zhuyin: "ㄏㄨㄢˋ", comp: "hand", structure: "left-right", vocab: ["換衣服", "交換", "換季"], definition: "交換、變更。", phrases: ["換衣服", "交換", "換季"], sentence: "運動後流了汗，我想要換一件乾爽的衣服。", breakdown: ["扌", "奐"], logic: "手做變換的動作。", story: "口訣：用手（扌）把舊的換成新而渙發（奐）的東西。" },
+    "捧": { grade: "2B", zhuyin: "ㄆㄥˇ", comp: "hand", structure: "top-bottom", vocab: ["捧著", "捧場", "捧花"], definition: "用雙手托住物品。", phrases: ["捧著", "捧場", "捧花"], sentence: "姐姐雙手捧著一盆美麗的鮮花走進客廳。", breakdown: ["扌", "奉"], logic: "手恭敬托起。", story: "口訣：用雙手（扌）恭敬地奉（奉）上一杯好茶。" },
+    "掉": { grade: "2B", zhuyin: "ㄉㄧㄠˋ", comp: "hand", structure: "left-right", vocab: ["掉落", "掉下去", "失掉"], definition: "落下、遺失。", phrases: ["掉落", "掉下去", "失掉"], sentence: "秋天到了，枯黃的樹葉從老樹上慢慢掉落。", breakdown: ["扌", "卓"], logic: "手拿不住落下了高處的物體。", story: "口訣：手（扌）沒有拿穩，桌（卓）子上的大蘋果滾下來了。" },
+    "抱": { grade: "2B", zhuyin: "ㄅㄠˋ", comp: "hand", structure: "left-right", vocab: ["擁抱", "抱住", "懷抱"], definition: "用手臂圍住。", phrases: ["擁抱", "抱住", "懷抱"], sentence: "見到好久不見的爺爺，我開心地給他一個溫暖的大擁抱。", breakdown: ["扌", "包"], logic: "手臂像包袱一樣圍繞。", story: "口訣：伸開雙手（扌）像大包（包）袱一樣，把心愛的人圍繞起來。" },
+    "持": { grade: "2B", zhuyin: "ㄔˊ", comp: "hand", structure: "left-right", vocab: ["保持", "持久", "持平"], definition: "握手、拿著、保持。", phrases: ["保持", "持久", "持平"], sentence: "在圖書館看書的時候，請保持安靜不要大聲吵鬧。", breakdown: ["扌", "寺"], logic: "手守住目標。", story: "口訣：像寺（寺）廟裡的僧人一樣，手（扌）中握著信念長久不變。" },
+    "操": { grade: "2B", zhuyin: "ㄘㄠ", comp: "hand", structure: "left-right", vocab: ["操場", "操作", "體操"], definition: "控制、拿著或練習。", phrases: ["操場", "操作", "體操"], sentence: "體育課時，全班同學都在操場上認真跑跳玩耍。", breakdown: ["扌", "喿"], logic: "手拿著器材練習。", story: "口訣：像眾鳥（喿）吱喳般，我們在操場上揮動雙手（扌）做運動。" },
+    "搗": { grade: "2B", zhuyin: "ㄉㄠˇ", comp: "hand", structure: "left-right", vocab: ["搗亂", "搗蛋", "搗藥"], definition: "敲擊、捶打。", phrases: ["搗亂", "搗蛋", "搗藥"], sentence: "幾隻小猴子在觀光果園裡頑皮搗蛋。", breakdown: ["扌", "島"], logic: "雙手像是在島嶼上不停敲擊。", story: "口訣：玉兔在月球的小島（島）上，用手（扌）認真敲打搗麻糬。" },
+
+    // 3. 人部 (20 個)
+    "你": { grade: "1A", zhuyin: "ㄋㄧˇ", comp: "person", structure: "left-right", vocab: ["你好", "你們", "你的"], definition: "對別人的稱呼（第二人稱代詞）。", phrases: ["你好", "你們", "你的"], sentence: "認識你這位好朋友，我非常高興。", breakdown: ["亻", "爾"], logic: "面前的一個人。", story: "口訣：指著對面那（爾）個（人），就是你。" },
+    "他": { grade: "1A", zhuyin: "ㄊㄚ", comp: "person", structure: "left-right", vocab: ["他們", "他人", "其他"], definition: "對別人的稱呼（第三人稱代詞）。", phrases: ["他們", "他人", "其他"], sentence: "那個在空地踢球的小男孩就是他。", breakdown: ["亻", "也"], logic: "指別人。", story: "口訣：（也）就是那（人），指著遠方的別人稱呼為他。" },
+    "們": { grade: "1A", zhuyin: "ㄇㄣ·", comp: "person", structure: "left-right", vocab: ["我們", "人們", "她們"], definition: "表示多數的接尾詞。", phrases: ["我們", "人們"], sentence: "我們全班都是最棒的好朋友。", breakdown: ["亻", "門"], logic: "門口站了一群人。", story: "口訣：大（門）口站了許多（人），聚在一起就是我們。" },
+    "人": { grade: "1A", zhuyin: "ㄖㄣˊ", comp: "person", structure: "single", vocab: ["大人", "人物", "人群"], definition: "人類。", phrases: ["大人", "人物", "人群"], sentence: "馬路旁邊有許多忙碌的過路人。", breakdown: ["人"], logic: "象形字，側立的人。", story: "口訣：彎腰側立的形狀，我們都是互助互愛的人。" },
+    "像": { grade: "1B", zhuyin: "ㄒㄧㄤˋ", comp: "person", structure: "left-right", vocab: ["好像", "畫像", "人像"], definition: "類似、如同。", phrases: ["好像", "畫像"], sentence: "妹妹長得好像天使一樣可愛。", breakdown: ["亻", "象"], logic: "人看到的樣子就像大象一樣鮮明。", story: "口訣：這個（人）高大得（象）頭大象，長得真像！" },
+    "什": { grade: "1B", zhuyin: "ㄕㄣˊ", comp: "person", structure: "left-right", vocab: ["什麼", "什麼事", "什物"], definition: "疑問詞，用來詢問事物。", phrases: ["什麼", "什麼事"], sentence: "你蹲在地上，在找什麼東西呢？", breakdown: ["亻", "十"], logic: "指許多交錯的人事物。", story: "口訣：看見十個人的交叉路口，不禁問『發生了什麼？』" },
+    "但": { grade: "1B", zhuyin: "ㄉㄢˋ", comp: "person", structure: "left-right", vocab: ["但是", "不但", "但願"], definition: "不過、可是。", phrases: ["但是", "不但", "但願"], sentence: "我本來想睡覺，但是好朋友找我出門玩。", breakdown: ["亻", "旦"], logic: "太陽升起後人轉身。", story: "口訣：太陽升起（旦），這個（人）雖然想睡，但還是起床了。" },
+    "借": { grade: "1B", zhuyin: "ㄐㄧㄝˋ", comp: "person", structure: "left-right", vocab: ["借書", "借過", "借錢"], definition: "暫時使用別人的東西。", phrases: ["借書", "借過", "借錢"], sentence: "我向學校漂亮的圖書館借了一本童話書。", breakdown: ["亻", "昔"], logic: "人與人過去的約定。", story: "口訣：因為往日（昔）的交情，他（亻）願意把東西借給我。" },
+    "住": { grade: "1B", zhuyin: "ㄓㄨˋ", comp: "person", structure: "left-right", vocab: ["居住", "住所", "留住"], definition: "居住、停留。", phrases: ["居住", "住所", "留住"], sentence: "小鳥在綠色大樹上築了一個溫暖的巢住下來。", breakdown: ["亻", "主"], logic: "人停留做主人。", story: "口訣：這個（人）當了這個房子的（主）人，就在這裡住下。" },
+    "做": { grade: "1B", zhuyin: "ㄗㄨㄛˋ", comp: "person", structure: "left-right", vocab: ["做事", "做夢", "做功課"], definition: "進行工作或活動。", phrases: ["做事", "做夢", "做功課"], sentence: "放學後，我認真做完老師交代的回家功課。", breakdown: ["亻", "故"], logic: "人有目的地行動。", story: "口訣：人（亻）為了一些原（故）而去努力做事。" },
+    "健": { grade: "1B", zhuyin: "ㄐㄧㄢˋ", comp: "person", structure: "left-right", vocab: ["健康", "健保", "健壯"], definition: "強壯有力的。", phrases: ["健康", "健保", "健壯"], sentence: "小馬每天認真跑步，身體長得非常健壯。", breakdown: ["亻", "建"], logic: "建立強壯的身體。", story: "口訣：這個（人）天天運動，（建）立起健壯的好身體。" },
+    "候": { grade: "2A", zhuyin: "ㄏㄡˋ", comp: "person", structure: "left-right", vocab: ["時候", "等候", "候鳥"], definition: "等待或某一個時間事物。", phrases: ["時候", "等候", "候鳥"], sentence: "等候公車需要耐心，千萬不要在路邊亂跑。", breakdown: ["亻", "侯"], logic: "人拿箭射標靶待命。", story: "口訣：人（亻）像諸（侯）一樣，在門外靜靜等候。" },
+    "件": { grade: "2A", zhuyin: "ㄐㄧㄢˋ", comp: "person", structure: "left-right", vocab: ["一件", "事件", "條件"], definition: "計算事物的單位。", phrases: ["一件", "事件", "條件"], sentence: "這是一件幫助別人的好事，值得大家學習。", breakdown: ["亻", "牛"], logic: "人分開牛來數數。", story: "口訣：人（亻）牽著一條（牛），這是一件稀奇的事。" },
+    "伸": { grade: "2A", zhuyin: "ㄕㄣ", comp: "person", structure: "left-right", vocab: ["伸手", "伸長", "伸展"], definition: "舒展開來。", phrases: ["伸手", "伸長", "伸展"], sentence: "早晨起床後，伸個大大的懶腰感覺真舒服。", breakdown: ["亻", "申"], logic: "人如閃電般伸直身。", story: "口訣：人（亻）把身體像閃電一樣直直拉（申），叫做伸展。" },
+    "倒": { grade: "2A", zhuyin: "ㄉㄠˇ", comp: "person", structure: "left-right", vocab: ["跌倒", "倒下", "打倒"], definition: "傾跌、仆下。", phrases: ["跌倒", "倒下"], sentence: "走路不小心踢到石頭，很容易會跌倒。", breakdown: ["亻", "到"], logic: "人身來到地面。", story: "口訣：小（人）一走（到）這邊，碰的一聲不小心跌倒了。" },
+    "介": { grade: "2A", zhuyin: "ㄐㄧㄝˋ", comp: "person", structure: "top-bottom", vocab: ["介紹", "介入", "介意"], definition: "在兩者之間傳達或介紹。", phrases: ["介紹", "介入"], sentence: "透過老師的介紹，我認識了新夥伴。", breakdown: ["人", "介"], logic: "人站在中間路口。", story: "口訣：一（人）站在兩旁中間，像橋梁一樣做介紹。" },
+    "保": { grade: "2A", zhuyin: "ㄅㄠˇ", comp: "person", structure: "left-right", vocab: ["保護", "保險", "保證"], definition: "保護、守衛。", phrases: ["保護", "保險"], sentence: "堅固的雨傘能保護我不被大雨淋濕。", breakdown: ["亻", "呆"], logic: "人抱著小孩。", story: "口訣：大（人）把傻（呆）純真的孩子緊緊抱住保護起來。" },
+    "伴": { grade: "2B", zhuyin: "ㄅㄢˋ", comp: "person", structure: "left-right", vocab: ["陪伴", "同伴", "玩伴"], definition: "共同生活或一起做事的人。", phrases: ["陪伴", "同伴"], sentence: "小黑狗是我的玩伴，每天都陪我散步。", breakdown: ["亻", "半"], logic: "人的一半，同伴。", story: "口訣：這個（人）分我（半）塊大餅，他真是我的好同伴。" },
+    "傳": { grade: "2B", zhuyin: "ㄔㄨㄢˊ", comp: "person", structure: "left-right", vocab: ["傳球", "傳統", "傳送"], definition: "遞送、交接。", phrases: ["傳球", "傳統"], sentence: "接力賽時，我們要穩穩地把接力棒傳給下一位。", breakdown: ["亻", "專"], logic: "專心遞交。", story: "口訣：這個（人）（專）心一意地把重要的信件傳送出去。" },
+    "信": { grade: "2B", zhuyin: "ㄒㄧㄣˋ", comp: "person", structure: "left-right", vocab: ["相信", "寫信", "信封"], definition: "文字書信或誠實可靠。", phrases: ["相信", "寫信"], sentence: "我寫了一張信紙，寄給遠方的爺爺。", breakdown: ["亻", "言"], logic: "人說出的話有信用。", story: "口訣：（人）說出來的話（言）一定要能讓人相信。" },
+
+    // 4. 口部 (33 個)
+    "吹": { grade: "1A", zhuyin: "ㄔㄨㄟ", comp: "mouth", structure: "left-right", vocab: ["吹氣", "吹風", "吹牛"], definition: "用力吐氣。", phrases: ["吹氣", "吹風", "吹牛"], sentence: "吃下生日蛋糕前，我用力吹熄了小蠟燭。", breakdown: ["口", "欠"], logic: "合口呵氣。", story: "口訣：嘴巴（口）大大張開打哈（欠），呼出一陣風就像在吹氣。" },
+    "問": { grade: "1A", zhuyin: "ㄨㄣˋ", comp: "mouth", structure: "inner-outer", vocab: ["問題", "疑問", "學問"], definition: "向別人請教解答。", phrases: ["問題", "疑問"], sentence: "功課上有遇見不會的問題，勇敢開口問老師。", breakdown: ["門", "口"], logic: "在門邊張口打聽。", story: "口訣：走到大（門）旁，張開嘴巴（口）開聲請問別人的意見。" },
+    "叫": { grade: "1A", zhuyin: "ㄐㄧㄠˋ", comp: "mouth", structure: "left-right", vocab: ["大叫", "叫聲", "喊叫"], definition: "呼喊或發出聲音。", phrases: ["大叫", "叫聲"], sentence: "不要在安靜的醫院走廊上跑跳叫喊。", breakdown: ["口", "丩"], logic: "嘴巴發出長聲。", story: "口訣：嘴（口）裡發出的聲音被拉得長長（丩），大叫起來。" },
+    "嗎": { grade: "1A", zhuyin: "ㄇㄚ·", comp: "mouth", structure: "left-right", vocab: ["好嗎", "是嗎", "對嗎"], definition: "表示疑問的語氣詞。", phrases: ["好嗎", "是嗎"], sentence: "今天好天氣，你要跟我出門嗎？", breakdown: ["口", "馬"], logic: "張口詢問之音。", story: "口訣：嘴巴（口）像（馬）兒叫一樣，滿口的好奇與問號。" },
+    "哈": { grade: "1A", zhuyin: "ㄏㄚ", comp: "mouth", structure: "left-right", vocab: ["哈哈", "哈欠", "哈啦"], definition: "張口呼氣或笑聲。", phrases: ["哈哈", "哈欠"], sentence: "看見有趣的卡通，全家人都笑得哈哈大笑。", breakdown: ["口", "合"], logic: "笑得合不攏嘴。", story: "口訣：嘴巴（口）笑到快（合）不起來，發出哈哈哈的歡樂聲。" },
+    "右": { grade: "1A", zhuyin: "ㄧㄡˋ", comp: "mouth", structure: "top-bottom", vocab: ["右手", "右邊", "左右"], definition: "表示方向、位置。相對於「左」。", phrases: ["右手", "右邊"], sentence: "下樓梯時請靠右邊走，以保安全。", breakdown: ["𠂇", "口"], logic: "手送食物入口。", story: "口訣：我的（右）手拿著叉子，準備把食物送進嘴（口）裡。" },
+    "和": { grade: "1A", zhuyin: "ㄏㄜˊ", comp: "mouth", structure: "left-right", vocab: ["平和", "和氣", "我和"], definition: "溫和、平順或共同。", phrases: ["平和", "和氣"], sentence: "我和可愛的妹妹一起分享香甜西瓜。", breakdown: ["禾", "口"], logic: "口吃禾穀而安。", story: "口訣：吃下溫和的（禾）穀進嘴（口），脾氣也變得和氣。" },
+    "呀": { grade: "1B", zhuyin: "ㄧㄚ·", comp: "mouth", structure: "left-right", vocab: ["哎呀", "好呀", "是呀"], definition: "表示驚訝或疑問的語氣詞。", phrases: ["哎呀", "好呀"], sentence: "哎呀！這多漂亮的花朵呀！", breakdown: ["口", "牙"], logic: "牙口發出讚嘆。", story: "口訣：嘴（口）打開露出了（牙）齒，發出了驚訝的「呀」一聲。" },
+    "唱": { grade: "1B", zhuyin: "ㄔㄤˋ", comp: "mouth", structure: "left-right", vocab: ["唱歌", "合唱", "唱曲"], definition: "大聲念出或歌詠。", phrases: ["唱歌", "合唱"], sentence: "樹上的小鳥每天早晨都在開心地唱歌。", breakdown: ["口", "昌"], logic: "口發昌盛美音。", story: "口訣：嘴巴（口）高聲唱出興（昌）盛動聽的樂曲。" },
+    "呢": { grade: "1B", zhuyin: "ㄋㄜ·", comp: "mouth", structure: "left-right", vocab: ["你在哪呢", "什麼呢", "呢喃"], sentence: "說好的太陽公公在哪裡呢？", breakdown: ["口", "尼"], logic: "口部發音語氣。", story: "口訣：小（尼）姑開了口（口），用疑問語氣問了一聲「呢」。" },
+    "吧": { grade: "1B", zhuyin: "ㄅㄚ·", comp: "mouth", structure: "left-right", vocab: ["走吧", "好吧", "吧台"], definition: "表示商量、請求的語氣詞。", phrases: ["走吧", "好吧"], sentence: "我們趕快一起回家吃飯吧。", breakdown: ["口", "巴"], logic: "徵詢語氣之音。", story: "口訣：嘴（口）巴靠近別人像小蛇（巴）黏著，問句「好不好吧？」" },
+    "啊": { grade: "1B", zhuyin: "ㄚ·", comp: "mouth", definition: "表示驚訝或讚嘆的語氣詞。", phrases: ["啊對了", "啊呀"], sentence: "啊！這張畫畫得真是好生動啊。", breakdown: ["口", "阿"], logic: "張大嘴嘆氣。", story: "口訣：（阿）呆張大嘴（口），忽然想到一件事大叫「啊」！" },
+    "咬": { grade: "1B", zhuyin: "ㄧㄠˇ", comp: "mouth", definition: "用上下牙齒夾住或切斷東西。", phrases: ["咬斷", "咬碎"], sentence: "調皮的小狗緊緊咬住那根長長的骨頭。", breakdown: ["口", "交"], logic: "牙齒上下交錯。", story: "口訣：上下的牙與嘴（口）巴（交）錯在一起，就咬斷了。" },
+    "吃": { grade: "1B", zhuyin: "ㄔ", comp: "mouth", definition: "放進嘴裡咀嚼後吞下。", phrases: ["吃飯", "吃麵"], sentence: "小雞在泥土地上到處找蟲吃。", breakdown: ["口", "乞"], logic: "口求食物。", story: "口訣：（乞）丐可憐地伸出碗，終於吃到了一（口）好飯。" },
+    "哭": { grade: "1B", zhuyin: "ㄎㄨ", comp: "mouth", definition: "流淚、悲哀發聲。", phrases: ["哭聲", "哭泣"], sentence: "好朋友要轉學了，我心裡很難過想哭。", breakdown: ["口", "口", "犬"], logic: "像狗叫樣流淚。", story: "口訣：小狗（犬）叫了兩聲（雙口），原來是難過地在哭。" },
+    "呱": { grade: "2A", zhuyin: "ㄍㄨㄚ", comp: "mouth", definition: "形容鴨子或青蛙的叫聲。", phrases: ["呱呱叫", "呱噪"], sentence: "呱呱呱，池塘裡的鴨子在找玩伴。", breakdown: ["口", "瓜"], logic: "口發刮聲。", story: "口訣：吃了大西（瓜），嘴（口）裡發出呱呱的響聲。" },
+    "聞": { grade: "2A", zhuyin: "ㄨㄣˊ", comp: "mouth", definition: "用鼻子嗅或用耳朵聽。", phrases: ["新聞", "聞香"], sentence: "遠處傳來了好聽的音樂，我仔細聽聞。", breakdown: ["門", "耳"], logic: "在門邊耳聽。", story: "口訣：站在大（門）旁，用（耳）朵專心聽各種新奇的見聞。" },
+    "嘴": { grade: "2A", zhuyin: "ㄗㄨㄟˇ", comp: "mouth", definition: "口部，人和動物吃東西和發聲的器官。", phrases: ["嘴巴", "閉嘴"], sentence: "說話時，最重要的是這張能說好話的嘴。", breakdown: ["口", "觜"], logic: "發聲的部位。", story: "口訣：鳥（觜）和人（口）一樣，都是用來吃東西和發聲的嘴。" },
+    "名": { grade: "2A", zhuyin: "ㄇㄧㄥˊ", comp: "mouth", definition: "名字、名稱。", phrases: ["名字", "名單"], sentence: "請在那張考卷上方寫下你的名字。", breakdown: ["夕", "口"], logic: "傍晚喊名。", story: "口訣：到了晚（夕）上看不見人，只好用嘴（口）大喊名字來找人。" },
+    "哪": { grade: "2A", zhuyin: "ㄋㄚˇ", comp: "mouth", definition: "表示疑問的詞。", phrases: ["在哪", "哪裡"], sentence: "你最喜歡哪一種顏色的漂亮衣服呢？", breakdown: ["口", "那"], logic: "問在那邊的事。", story: "口訣：嘴（口）巴問著（那）邊的事物，到底在哪裡呀？" },
+    "盒": { grade: "2A", zhuyin: "ㄏㄜˊ", comp: "mouth", definition: "有蓋子、可以裝東西的小容器。", phrases: ["盒子", "紙盒"], sentence: "這是我珍藏可愛小貼紙的鐵盒子。", breakdown: ["合", "皿"], logic: "器皿蓋合。", story: "口訣：把器（皿）的蓋子（合）起來裝東西，這就是好用的盒子。" },
+    "口": { grade: "2A", zhuyin: "ㄎㄡˇ", comp: "mouth", definition: "嘴巴或出入的通道。", phrases: ["口罩", "門口"], sentence: "出門時請記得戴好口罩保護呼吸道。", breakdown: ["口"], logic: "象形，張開的嘴。", story: "口訣：口裡說出的話要像糖果一樣甜甜的，大家才會喜歡你。" },
+    "對": { grade: "2A", zhuyin: "ㄉㄨㄟˋ", comp: "mouth", definition: "正確的、面向或成雙的。", phrases: ["答對", "面面對"], sentence: "兩隻小鳥面對面站著，一起唱出美麗歌聲。", breakdown: ["業", "寸"], logic: "對準目標。", story: "口訣：用那一（寸）真心，（業）績一定會做對。" },
+    "念": { grade: "2A", zhuyin: "ㄋㄧㄢˋ", comp: "mouth", definition: "思念或大聲讀出。", phrases: ["念書", "想念"], sentence: "把生字大聲地念出來，就能永遠記在心裡。", breakdown: ["今", "心"], logic: "心中時刻記掛的。", story: "口訣：（今）天的學習，要用心（心）好好想念、朗讀。" },
+    "巴": { grade: "2A", zhuyin: "ㄅㄚ", comp: "mouth", definition: "希望、期盼或黏著。", phrases: ["尾巴", "下巴"], sentence: "小貓的尾巴毛茸茸的，一直搖來搖去。", breakdown: ["巴"], logic: "像蛇捲曲附著。", story: "口訣：長得像是吐著舌頭的小蛇，緊緊巴在大樹幹上。" },
+    "哇": { grade: "2B", zhuyin: "ㄨㄚ", comp: "mouth", definition: "表示驚訝或哭泣的聲音。", phrases: ["哇哇哭", "哇！"], sentence: "看到大象表演噴水，小朋友都驚叫哇！", breakdown: ["口", "圭"], logic: "開口驚嘆。", story: "口訣：小青蛙大叫一聲，嚇得嘴（口）巴變成（圭）土般驚叫哇！" },
+    "喝": { grade: "2B", zhuyin: "ㄏㄜ", comp: "mouth", definition: "把液體吞進肚子裡。", phrases: ["喝水", "好喝"], sentence: "天氣熱口渴時喝一杯西瓜汁，真清爽。", breakdown: ["口", "曷"], logic: "口渴而飲。", story: "口訣：嘴（口）裡覺得渴了（曷），就應該馬上喝一點涼水。" },
+    "呵": { grade: "2B", zhuyin: "ㄏㄜ", comp: "mouth", definition: "吐氣或笑聲。", phrases: ["呵呵", "呵氣"], sentence: "看到小動物逗趣搞笑的模樣，我忍不住呵呵笑。", breakdown: ["口", "可"], logic: "呼氣之聲。", story: "口訣：張開嘴（口），用（可）愛的表情呼出一口氣，呵呵笑出聲。" },
+    "呼": { grade: "2B", zhuyin: "ㄏㄨ", comp: "mouth", definition: "把氣吐出來或大聲呼喊。", phrases: ["呼吸", "歡呼"], sentence: "森林裡的風呼呼地吹著，像在說話。", breakdown: ["口", "乎"], logic: "發聲呼呼氣。", story: "口訣：嘴（口）裡發出一陣風，大老遠都能（乎）然聽見呼喚。" },
+    "吵": { grade: "2B", zhuyin: "ㄔㄠˇ", comp: "mouth", definition: "聲音大而雜亂。", phrases: ["吵鬧", "很吵"], sentence: "鄰居家養的鸚鵡一直大聲叫，吵個不停。", breakdown: ["口", "少"], logic: "少數人在爭執。", story: "口訣：就算只有（少）數的幾張嘴（口），也能吵翻屋頂。" },
+    "吐": { grade: "2B", zhuyin: "ㄊㄨˇ", comp: "mouth", definition: "從嘴裡湧出來。", phrases: ["吐出", "嘔吐"], sentence: "蠶寶寶吐出了細絲，蓋了一個溫暖的家。", breakdown: ["口", "土"], logic: "口中排出物。", story: "口訣：吃壞肚子，把泥（土）般的壞東西從口（口）中吐出。" },
+    "嚇": { grade: "2B", zhuyin: "ㄒㄧㄚ", comp: "mouth", definition: "使人害怕、吃驚。", phrases: ["嚇人", "嚇到"], sentence: "大黑影突然間跳出來，嚇得我趕快跑。", breakdown: ["口", "赫"], logic: "發出赫赫吼聲。", story: "口訣：嘴（口）裡發出可怕的威（赫）叫聲，把壞人嚇跑了。" },
+    "告": { grade: "2B", zhuyin: "ㄍㄠˋ", comp: "mouth", definition: "通知、報告。", phrases: ["告訴", "報告"], sentence: "比賽得了第一名，我要把好消息告訴大家。", breakdown: ["牛", "口"], logic: "牛觸角口述。", story: "口訣：用（牛）般的力氣大聲開口（口），把事情告知天下。" },
+
+    // 5. 水部 (30 個)
+    "水": { grade: "1A", zhuyin: "ㄕㄨㄟˇ", comp: "water", definition: "無色無味的透明液體。", phrases: ["喝水", "開水", "水池"], sentence: "運動後要多喝開水補充水分。", breakdown: ["水"], logic: "象形文字，像河流中水流動的形狀。", story: "口訣：中間一長豎，兩旁如水花，流動真美麗。", image: "char_water_1776070533357.png" },
+    "沒": { grade: "1A", zhuyin: "ㄇㄟˊ", comp: "water", definition: "沒有、缺乏。", phrases: ["沒有", "沒事", "沒關係"], sentence: "我今天不小心犯了錯，但沒關係下次會注意。", breakdown: ["氵", "殳"], logic: "沉入水中，引申為消失、沒有。", story: "口訣：東西掉入水中被淹沒，就什麼都沒有了。" },
+    "泡": { grade: "1A", zhuyin: "ㄆㄠˋ", comp: "water", definition: "液體包住氣體形成的小球。", phrases: ["泡泡", "水泡", "泡茶"], sentence: "小鴨子在浴缸裡玩著白色的小泡泡。", breakdown: ["氵", "包"], logic: "水結合了包裹形狀。", story: "口訣：水滴被包起來，輕輕吹成了圓泡泡。" },
+    "池": { grade: "1A", zhuyin: "ㄔˊ", comp: "water", definition: "蓄水的地方。", phrases: ["池塘", "水池", "電池"], sentence: "公園的池塘裡有一隻可愛的小鴨。", breakdown: ["氵", "也"], logic: "水聚在一起的地方。", story: "口訣：水也有自己的家，就是聚在一起的水池。" },
+    "涼": { grade: "1B", zhuyin: "ㄌㄧㄤˊ", comp: "water", definition: "溫度較低、微冷。", phrases: ["涼快", "清涼", "涼風"], sentence: "秋天的北風吹起來非常涼快。", breakdown: ["氵", "京"], logic: "水在陰涼的高處散發寒意。", story: "口訣：在水邊高台（京）吹風，真是清涼的好地方。" },
+    "河": { grade: "1B", zhuyin: "ㄏㄜˊ", comp: "water", definition: "天然匯聚的水流。", phrases: ["河流", "河水", "過河"], sentence: "這條大河長長地流過我們的村莊。", breakdown: ["氵", "可"], logic: "可以通航的水道。", story: "口訣：小（可）跑到水（氵）裡，好多水流來變成了大「河」。" },
+    "游": { grade: "1B", zhuyin: "ㄧㄡˊ", comp: "water", definition: "在水面上行動。", phrases: ["游泳", "遊戲", "漫游"], sentence: "彩色的小魚在海裡自由自在地游泳。", breakdown: ["氵", "斿"], logic: "人如旗幟般隨波漂流。", story: "口訣：小孩在水中戴著泳帽游來游去真快樂。" },
+    "溫": { grade: "1B", zhuyin: "ㄨㄣ", comp: "water", definition: "冷熱適中、微熱的。", phrases: ["溫暖", "氣溫", "溫柔"], sentence: "媽媽那溫暖的手掌握著我，讓我不害怕。", breakdown: ["氵", "昷"], logic: "適度的熱水盛在器皿裡。", story: "口訣：端在盤子裡的水，總是暖暖、溫溫的。" },
+    "漂": { grade: "1B", zhuyin: "ㄆㄧㄠ", comp: "water", definition: "浮在液體表面。", phrases: ["漂亮", "漂浮", "漂流"], sentence: "這件紅色的洋裝穿起來非常漂亮。", breakdown: ["氵", "票"], logic: "浮而不沉，因潔淨而顯得美。", story: "口訣：水面上浮著一張車票，洗得又乾淨又漂亮。" },
+    "滿": { grade: "2A", zhuyin: "ㄇㄢˇ", comp: "water", definition: "全部充實、沒有空隙。", phrases: ["充滿", "滿意", "滿足"], sentence: "大家對這次的郊遊旅行都感到非常滿意。", breakdown: ["氵", "𦐇"], logic: "水太多而溢出來。", story: "口訣：水杯裡的水滿到裝不下，就開心地溢出來了。" },
+    "消": { grade: "2A", zhuyin: "ㄒㄧㄠ", comp: "water", definition: "除去、減退。", phrases: ["消失", "消化", "消滅"], sentence: "太陽出來後，清晨的霧氣就全部消失了。", breakdown: ["氵", "肖"], logic: "水使東西散去、解體。", story: "口訣：用水把壞東西沖刷掉，就通通消失不見了。" },
+    "法": { grade: "2A", zhuyin: "ㄈㄚˇ", comp: "water", definition: "規定、制度或方法。", phrases: ["方法", "法律", "辦法"], sentence: "我們想到了一個好辦法來解決這個體育難題。", breakdown: ["氵", "去"], logic: "如流水般平直、能去除不公。", story: "口訣：好辦法就像流水一樣，能把困難帶去遠方。" },
+    "灘": { grade: "2A", zhuyin: "ㄊㄢ", comp: "water", definition: "水邊的沙地。", phrases: ["沙灘", "海灘", "淺灘"], sentence: "我們全家人在沙灘上開心地堆著大沙堡。", breakdown: ["氵", "難"], logic: "水流遇到阻礙形成的淺地。", story: "口訣：海水退去後，就留下了（難）免會弄一身沙的海灘。" },
+    "海": { grade: "2A", zhuyin: "ㄏㄞˇ", comp: "water", definition: "地球上廣大的鹹水水域。", phrases: ["大海", "海洋", "海邊"], sentence: "暑假時，爸爸帶我去海邊撿起美麗潔白的貝殼。", breakdown: ["氵", "每"], logic: "接納每條河流的百川之母。", story: "口訣：（每）一條河流，最後都會流進那廣闊深藍的大海。" },
+    "溪": { grade: "2A", zhuyin: "ㄒㄧ", comp: "water", definition: "山谷間流動的小水流。", phrases: ["小溪", "溪水", "溪流"], sentence: "清涼乾淨的小溪裡住著許多螃蟹和活蹦亂跳的小魚。", breakdown: ["氵", "奚"], logic: "從山谷岩縫流出的小水。", story: "口訣：山谷裡的僕人（奚）正彎腰取著清澈甜美的小溪水。" },
+    "活": { grade: "2A", zhuyin: "ㄏㄨㄛˊ", comp: "water", definition: "有生命的、不死板的。", phrases: ["活動", "生活", "活潑"], sentence: "我家的小土狗是一隻活潑可愛的好夥伴。", breakdown: ["氵", "舌"], logic: "口中分泌液水，象徵生機。", story: "口訣：有水喝有舌頭能發聲，這才是活蹦亂跳的健康生命。" },
+    "清": { grade: "2A", zhuyin: "ㄑㄧㄥ", comp: "water", definition: "純粹、沒有雜質。", phrases: ["清澈", "清潔", "清楚"], sentence: "清晨的芬芳空氣總是讓人覺得很清新又舒服。", breakdown: ["氵", "青"], logic: "水色如青天般純淨。", story: "口訣：水像（青）色的天空一樣，清澈見底沒有一點點黑污泥。" },
+    "沖": { grade: "2A", zhuyin: "ㄔㄨㄥ", comp: "water", definition: "用水洗滌或向上衝刺。", phrases: ["沖洗", "沖泡", "沖浪"], sentence: "白浪猛烈地沖刷著岸邊的巨大礁石，發出巨響。", breakdown: ["氵", "中"], logic: "水注入中心。", story: "口訣：大水筆直朝（中）間沖過去，水流力量真的非常強大。" },
+    "澡": { grade: "2A", zhuyin: "ㄗㄠˇ", comp: "water", definition: "洗滌身體。", phrases: ["洗澡", "澡堂", "泡澡"], sentence: "每天回家後好好洗個熱水澡，可以洗去一身的疲勞。", breakdown: ["氵", "喿"], logic: "在喧嘩中用水洗滌。", story: "口訣：三隻小鳥（喿）在水池裡吱吱喳喳開心地跳水洗澡。" },
+    "浴": { grade: "2A", zhuyin: "ㄩˋ", comp: "water", definition: "洗澡。", phrases: ["浴室", "淋浴", "浴缸"], sentence: "睡覺前在浴室淋浴洗乾淨，是一件很舒服的事。", breakdown: ["氵", "谷"], logic: "人在山谷集水處洗身。", story: "口訣：跑到山（谷）裡接天然瀑布水洗澡，天然健康又清涼。" },
+    "減": { grade: "2A", zhuyin: "ㄐㄧㄢˇ", comp: "water", definition: "數量變少、扣除。", phrases: ["減少", "減肥", "減法"], sentence: "老師說要把測驗卷上不必要的錯誤減低到最少。", breakdown: ["氵", "咸"], logic: "水被蒸曬而減退。", story: "口訣：（咸）咸的海水被毒辣太陽曬乾，水量就漸漸減少了。" },
+    "浮": { grade: "2A", zhuyin: "ㄈㄨˊ", comp: "water", definition: "停留在液體表面上。", phrases: ["浮力", "漂浮", "浮雲"], sentence: "一片枯黃的落葉輕輕地漂浮在公園水池面上。", breakdown: ["氵", "孚"], logic: "手抱孩童漂浮於上。", story: "口訣：拿著泳圈孵蛋（孚）假裝在水面上睡覺，輕輕鬆鬆浮起來。" },
+    "波": { grade: "2A", zhuyin: "ㄅㄛ", comp: "water", definition: "水面震盪起伏的樣子。", phrases: ["波浪", "波紋", "水波"], sentence: "春天微風吹過湖面，就會泛起一圈圈漂亮的波紋。", breakdown: ["氵", "皮"], logic: "水面皺起的樣子就像人的皮膚皺紋。", story: "口訣：水面就像披著一層柔軟的（皮），隨微風起伏變成小波浪。" },
+    "滴": { grade: "2B", zhuyin: "ㄉㄧ", comp: "water", definition: "液體一點一點的低下。", phrases: ["水滴", "滴答", "一點一滴"], sentence: "下雨天屋簷上的水珠正一滴一滴地落到地上發出聲響。", breakdown: ["氵", "帝"], logic: "如最高主宰落下的恩賜。", story: "口訣：上（帝）辛勤揮灑的透明汗水，成了一點一滴的清涼甘霖。" },
+    "浪": { grade: "2B", zhuyin: "ㄌㄤˋ", comp: "water", definition: "水面起伏的大波濤。", phrases: ["浪花", "波浪", "流浪"], sentence: "蔚藍沙灘上打來的浪花像冬天白雪一樣美麗。", breakdown: ["氵", "良"], logic: "奔流的美好而巨大的水量。", story: "口訣：大水遇見優（良）的好天氣，開心地跳躍成了雪白海浪。" },
+    "渴": { grade: "2B", zhuyin: "ㄎㄜˇ", comp: "water", definition: "口乾想要喝水。", phrases: ["口渴", "渴望", "止渴"], sentence: "操場上跑完步後流了滿身汗，我感到非常口渴想喝水。", breakdown: ["氵", "曷"], logic: "水分缺乏，身體發出渴望信號。", story: "口訣：毒辣太陽好大，請問（曷）到底哪裡有水可以解渴？" },
+    "洗": { grade: "2B", zhuyin: "ㄒㄧˇ", comp: "water", definition: "用水清除污垢。", phrases: ["洗手", "洗衣", "洗臉"], sentence: "媽媽常常耳提面命，吃飯前一定要洗手，這樣才健康。", breakdown: ["氵", "先"], logic: "優先做除垢的工作。", story: "口訣：在外頭玩得髒兮兮，回家第一要務（先）就是用水洗乾淨身體。" },
+    "泥": { grade: "2B", zhuyin: "ㄋㄧˊ", comp: "water", definition: "含水的軟土。", phrases: ["泥巴", "泥土", "爛泥"], sentence: "大雷雨天不要在泥巴堆裡亂跑，不然會弄髒新鞋子。", breakdown: ["氵", "尼"], logic: "水土凝結成親近的團狀。", story: "口訣：小（尼）姑在濕滑水坑裡摔了一大跤，全身沾得滿滿都是泥巴。" },
+    "漸": { grade: "2B", zhuyin: "ㄐㄧㄢˋ", comp: "water", definition: "慢慢地、一步步地。", phrases: ["漸漸", "逐漸", "漸進"], sentence: "傍晚太陽下山後，天空漸漸地變成了深藍色。", breakdown: ["氵", "斬"], logic: "如水流滲透般慢慢進入。", story: "口訣：車（車）停在斧（斤）旁加點水，動作慢慢漸漸靜止下來。" },
+    "淚": { grade: "2B", zhuyin: "ㄌㄟˋ", comp: "water", definition: "眼睛裡流出的水滴。", phrases: ["眼淚", "流淚", "淚滴"], sentence: "聽完台上講的這個感人故事，台下聽眾流下了感動的眼淚。", breakdown: ["氵", "戾"], logic: "悲傷使眼裡冒出水來。", story: "口訣：屋簷下小狗（犬）在門（戶）邊好孤單，流下滴答答的水珠眼淚。" },
+
+    // 6. 木部 (11 個)
+    "棵": { grade: "1B", zhuyin: "ㄎㄜ", comp: "wood", definition: "計算植物的單位。", phrases: ["一棵樹", "兩棵草"], sentence: "公園裡新種了一棵大榕樹。", breakdown: ["木", "果"], logic: "按木果實計數。", story: "口訣：樹木（木）結出了甜美的果（果）實，真是一棵好樹。" },
+    "樹": { grade: "1B", zhuyin: "ㄕㄨˋ", comp: "wood", definition: "木本植物的總稱。", phrases: ["樹葉", "樹木", "大樹"], sentence: "猴子在高的樹枝上開心地跑來跑去。", breakdown: ["木", "尌"], logic: "鼓舞向上的木。", story: "口訣：木頭旁站著打鼓（壴）的人（寸），鼓勵大樹向上長。" },
+    "桌": { grade: "1B", zhuyin: "ㄓㄨㄛ", comp: "wood", definition: "有平面的家具。", phrases: ["書桌", "桌椅", "桌子"], sentence: "請把書本整齊地放在書桌上。", breakdown: ["木", "𠔁"], logic: "太陽下木台。", story: "口訣：太陽（日）光下，木頭做的高台就是好用的桌子。" },
+    "樣": { grade: "2A", zhuyin: "ㄧㄤˋ", comp: "wood", definition: "形狀、種類。", phrases: ["樣子", "一樣", "榜樣"], sentence: "我和弟弟買了完全一樣的玩具車。", breakdown: ["木", "羕"], logic: "木頭的紋理。", story: "口訣：木頭加上長長的羊（羕）毛，大家都長得一個樣。" },
+    "材": { grade: "2A", zhuyin: "ㄘㄞˊ", comp: "wood", definition: "可以做器具的木頭或原料。", phrases: ["材料", "木材", "教材"], sentence: "這塊厚實的木材可以用來做一張大桌子。", breakdown: ["木", "才"], logic: "木裁切可用。", story: "口訣：這根木頭非常有才（才）華，是蓋房子的好木材。" },
+    "桶": { grade: "2A", zhuyin: "ㄊㄨㄥˇ", comp: "wood", definition: "圓形的盛水容器。", phrases: ["水桶", "木桶", "垃圾桶"], sentence: "我們提著紅色的小水桶，去海邊裝沙子玩。", breakdown: ["木", "甬"], logic: "木工用具。", story: "口訣：用木頭做成通道（甬）一樣深的容器，就是裝水桶。" },
+    "木": { grade: "2B", zhuyin: "ㄇㄨˋ", comp: "wood", definition: "樹木或木材。", phrases: ["木頭", "木材", "木馬"], sentence: "爺爺在山上砍了一些木柴來生火取暖。", breakdown: ["木"], logic: "象形，根葉齊。", story: "口訣：一根直挺挺的樹幹，長出了向上的樹枝和向下的根。" },
+    "植": { grade: "2B", zhuyin: "ㄓˊ", comp: "wood", definition: "栽種植物。", phrases: ["植物", "植樹", "種植"], sentence: "春天的校園裡，老師帶著大家一起植樹。", breakdown: ["木", "直"], logic: "直立的木。", story: "口訣：把樹木（木）直直（直）地種好，植物就會健康長大。" },
+    "根": { grade: "2B", zhuyin: "ㄍㄣ", comp: "wood", definition: "植物在地下的部位或事物的根本。", phrases: ["樹根", "根本", "生根"], sentence: "這棵老松樹有著像龍鬚一樣深深紮入泥土的長根。", breakdown: ["木", "艮"], logic: "難動的底部。", story: "口訣：樹木（木）長得很堅定（艮），因為它的樹根紮得很深。" },
+    "棍": { grade: "2B", zhuyin: "ㄍㄨㄣˋ", comp: "wood", definition: "長條形的木器。", phrases: ["木棍", "棍子", "鐵棍"], sentence: "哥哥用一根長長的木棍把樹上的果實打下來。", breakdown: ["木", "昆"], logic: "長長的木。", story: "口訣：哥哥（昆）拿著一根長長的樹木（木），變成防身的木棍。" },
+    "棒": { grade: "2B", zhuyin: "ㄅㄤˋ", comp: "wood", definition: "圓長條形的木棍；也用來形容很好、很優秀。", phrases: ["好棒", "棒球", "木棒"], sentence: "你的體操動作做得非常標準，真的太棒了！", breakdown: ["木", "奉"], logic: "雙手奉上的美木。", story: "口訣：雙手恭敬奉（奉）上一根木頭，大家拍手說好棒！" },
+
+    // 7. 足部 (10 個)
+    "走": { grade: "1A", zhuyin: "ㄗㄡˇ", comp: "foot", definition: "步行。", phrases: ["走路", "走動", "出走"], sentence: "每天吃完飯，全家人都會去公園散步走走。", breakdown: ["土", "足"], logic: "腳在地上行。", story: "口訣：雙腳（足）踩在泥土（土）上，一步一步向前走。" },
+    "跑": { grade: "1A", zhuyin: "ㄆㄠˇ", comp: "foot", definition: "快步急行。", phrases: ["跑步", "賽跑", "跑道"], sentence: "大隊接力時，我們盡全力在跑道上飛奔。", breakdown: ["足", "包"], logic: "腳步飛快像包裹一樣捲起。", story: "口訣：腳（足）步飛滿天，像把風包（包）起來一樣快跑。" },
+    "路": { grade: "1B", zhuyin: "ㄌㄨˋ", comp: "foot", definition: "供人、車行走的通道。", phrases: ["馬路", "道路", "公路"], sentence: "回家的路有很多條，但我最喜歡這條開滿小花的。", breakdown: ["足", "各"], logic: "每個人都走的地方。", story: "口訣：每個人（各）都必須用腳（足）踏上的地方，就是馬路。" },
+    "跳": { grade: "1B", zhuyin: "ㄊㄧㄠˋ", comp: "foot", definition: "腳踏地讓身體往上或往前躍起。", phrases: ["跳舞", "跳躍", "跳高"], sentence: "老師教我們學習跳繩的厲害技巧。", breakdown: ["足", "兆"], logic: "腳快速躍動。", story: "口訣：一腳（足）蹬躍，就像逃（兆）跑一樣輕盈地跳開。" },
+    "步": { grade: "1B", zhuyin: "ㄅㄨˋ", comp: "foot", definition: "行走時兩腳間的距離。", phrases: ["腳步", "走路", "散步"], sentence: "讓我們配合著音樂，一步一步地開心跳舞吧。", breakdown: ["止", "少"], logic: "左右分跨腳。", story: "口訣：雙腳前進走走停（止），在地上留下少（少）數的腳步。" },
+    "越": { grade: "2A", zhuyin: "ㄩㄝˋ", comp: "foot", definition: "跨過、度過或超過。", phrases: ["越過", "超越", "越來越好"], sentence: "天上的月亮越升越高，像一個大大的白玉盤。", breakdown: ["走", "戉"], logic: "腳跨過斧頭界點。", story: "口訣：走（走）過手持長柄斧頭（戉）的營地，成功越過界線。" },
+    "腳": { grade: "2A", zhuyin: "ㄐㄧㄠˇ", comp: "foot", definition: "腿或支撐物品的底部。", phrases: ["腳步", "雙腳", "腳踏車"], sentence: "我不小心踢到了一顆小石子，腳趾頭感覺有點痛。", breakdown: ["月", "卻"], logic: "足部肉骨。", story: "口訣：身體的肉（月）退卻（卻）到底下，就是用來走路的腳。" },
+    "跡": { grade: "2A", zhuyin: "ㄐㄧ", comp: "foot", definition: "留下來的痕跡。", phrases: ["遺跡", "足跡", "奇蹟"], sentence: "大雨過後，泥土上會發現小貓調皮走過的腳印跡。", breakdown: ["足", "亦"], logic: "留下的腳印。", story: "口訣：只要用腳走過，也（亦）會在大地上留下你的足跡。" },
+    "踢": { grade: "2B", zhuyin: "ㄊㄧ", comp: "foot", definition: "用腳觸擊。", phrases: ["踢球", "踢毽子", "踢開"], sentence: "哥哥最喜歡在溫暖的陽光下跟好朋友比賽踢足球。", breakdown: ["足", "易"], logic: "腳隨心意擊發。", story: "口訣：只要腳（足）步輕快，改變方向容（易），就能踢好球。" },
+    "足": { grade: "2B", zhuyin: "ㄗㄨˊ", comp: "foot", definition: "腳或腳部；也代表充實無缺的。", phrases: ["足球", "滿足", "充足"], sentence: "運動要適量，保持充足的睡眠也非常重要。", breakdown: ["足"], logic: "象形，膝下部。", story: "口訣：下面是腳丫子，上面連著小腿，這就是萬能的雙足。" },
+
+    // 8. 心部 (15 個)
+    "心": { grade: "1A", zhuyin: "ㄒㄧㄣ", comp: "heart", definition: "心臟；也指思想和感情的發源地。", phrases: ["開心", "心臟", "心事"], sentence: "今天在遊樂園玩了一整天，我真的好開心。", breakdown: ["心"], logic: "象形臟器。", story: "口訣：我們的心要像一盞明燈，照亮自己也能幫助別人。" },
+    "想": { grade: "1A", zhuyin: "ㄒㄧㄤˇ", comp: "heart", definition: "大腦思考或希望。", phrases: ["想法", "想念", "思想"], sentence: "夜色漸深，我正在想明天出門要穿哪一件漂亮衣服。", breakdown: ["相", "心"], logic: "在心裡看眾相。", story: "口訣：眼睛看相片（相），心裡（心）覺得好喜歡、好想念。" },
+    "快": { grade: "1B", zhuyin: "ㄎㄨㄞˋ", comp: "heart", definition: "速度高、時間短；或高興的感覺。", phrases: ["快樂", "快跑", "飛快"], sentence: "小烏龜雖然爬得很慢，但牠每天心裡都很快樂。", breakdown: ["忄", "夬"], logic: "心跳劇烈。", story: "口訣：心裡（忄）做出了果決（夬）的決定，動作自然飛快。" },
+    "急": { grade: "1B", zhuyin: "ㄐㄧˊ", comp: "heart", definition: "焦躁、迫切的。", phrases: ["焦急", "急忙", "著急"], sentence: "遇到難題不要心急，我們慢慢來一定做得好。", breakdown: ["⺈", "心"], logic: "被事情抓緊了。", story: "口訣：心（心）好像被狠狠地抓住（及）一樣，感到非常著急。" },
+    "情": { grade: "1B", zhuyin: "ㄑㄧㄥˊ", comp: "heart", definition: "心理受刺激而產生的感覺或情緒。", phrases: ["心情", "感情", "人情"], sentence: "謝謝你這段時間無私的照顧與深厚友情。", breakdown: ["忄", "青"], logic: "心如春草青嫩。", story: "口訣：心裡（忄）好像長出（青）色的嫩草，散發出滿滿感情。" },
+    "忍": { grade: "1B", zhuyin: "ㄖㄣˇ", comp: "heart", definition: "把感情或痛苦勉強壓抑住。", phrases: ["忍耐", "忍不住", "堅忍"], sentence: "這盤苦瓜雖然很苦，但我為了健康要忍著吃掉它。", breakdown: ["刃", "心"], logic: "心上有刀刃。", story: "口訣：一把鋒利的刀（刃）懸在心（心）頭，一定要學會忍耐。" },
+    "忘": { grade: "1B", zhuyin: "ㄨㄤˋ", comp: "heart", definition: "記不起來。", phrases: ["忘記", "遺忘", "健忘"], sentence: "我們要把快樂牢牢記住，不要讓美好的回憶都被遺忘了。", breakdown: ["亡", "心"], logic: "心死記不住。", story: "口訣：心（心）裡的記憶逃跑（亡）了，什麼都忘記了。" },
+    "怎": { grade: "2A", zhuyin: "ㄗㄣˇ", comp: "heart", definition: "表示疑問，如何、為什麼的意思。", phrases: ["怎麼", "怎麼辦", "怎樣"], sentence: "這本書的圖案會動，你到底是怎麼辦到的？", breakdown: ["乍", "心"], logic: "心感突然遲疑。", story: "口訣：心裡（心）突然乍（乍）現疑惑：這到底是怎麼一回事呢？" },
+    "意": { grade: "2A", zhuyin: "ㄧˋ", comp: "heart", definition: "心中的想法或心思。", phrases: ["注意", "意思", "願意"], sentence: "過馬路時請注意左右來車，確保安全。", breakdown: ["音", "心"], logic: "心底發出聲。", story: "口訣：聽從心（心）底發出的真實聲音（音），表達你的意願。" },
+    "思": { grade: "2A", zhuyin: "ㄙ", comp: "heart", definition: "考慮、想念。", phrases: ["思念", "思考", "思想"], sentence: "我的心思全在暑假與家人出國玩的那趟旅行。", breakdown: ["田", "心"], logic: "心在田中思維。", story: "口訣：這塊記憶的田（田）地裡，種滿了我對爺爺的心（心）思。" },
+    "怪": { grade: "2A", zhuyin: "ㄍㄨㄞˋ", comp: "heart", definition: "奇異的、不尋常的。", phrases: ["奇怪", "怪物", "怪獸"], sentence: "這道菜的味道聞起來怪怪的，可能是因為天氣太熱壞掉了。", breakdown: ["忄", "圣"], logic: "心感聖異跡。", story: "口訣：心（忄）裡看見聖（圣）人變魔術，覺得神奇又古怪。" },
+    "總": { grade: "2B", zhuyin: "ㄗㄨㄥˇ", comp: "heart", definition: "全部的、聚攏的。", phrases: ["總是", "總共", "總共"], sentence: "班長總是熱心助人，所以老師和同學都很喜歡他。", breakdown: ["糹", "悤"], logic: "心繫萬千。", story: "口訣：用線（糹）把大家匆（悤）忙的心思全部總合在一起。" },
+    "慢": { grade: "2B", zhuyin: "ㄇㄢˋ", comp: "heart", definition: "速度遲緩，與「快」相對。", phrases: ["慢慢", "慢點", "傲慢"], sentence: "蝸牛雖然爬行得很慢，但他卻因此看遍了花園裡的風景。", breakdown: ["忄", "曼"], logic: "心情悠長緩慢。", story: "口訣：心（忄）情跟著曼（曼）妙的音樂放鬆，動作就慢了。" },
+    "煩": { grade: "2B", zhuyin: "ㄈㄢˊ", comp: "heart", definition: "焦躁悶苦或麻煩。", phrases: ["煩惱", "心煩", "煩人"], sentence: "遇到再多功課也不要覺得心煩，一步步做完就好。", breakdown: ["火", "頁"], logic: "頭部發熱。", story: "口訣：大熱天頂著一顆大頭（頁）被火（火）烤，真是煩躁。" },
+    "怕": { grade: "2B", zhuyin: "ㄆㄚˋ", comp: "heart", definition: "心裡恐懼。", phrases: ["害怕", "可怕", "哪怕"], sentence: "小寶寶千萬不要害怕失敗，勇於嘗試才能學會走路。", breakdown: ["忄", "白"], logic: "心裡一片空。", story: "口訣：心裡（忄）被嚇得臉色慘白（白），真是好害怕。" },
+
+    // 9. 言部 (17 個)
+    "請": { grade: "1A", zhuyin: "ㄑㄧㄥˇ", comp: "speech", definition: "向別人尋求同意；懇求或有禮貌的要求。", phrases: ["請問", "請客", "請坐"], sentence: "當你需要別人幫忙時，先有禮貌地說一聲「請」。", breakdown: ["言", "青"], logic: "言如春意清客。", story: "口訣：用清（青）亮悅耳的話語（言）邀請朋友，非常有禮貌。" },
+    "說": { grade: "1A", zhuyin: "ㄕㄨㄛ", comp: "speech", definition: "用言語講述事物。", phrases: ["說話", "小說", "說明"], sentence: "他說童話故事的能力強得驚人，大家都聽得入迷了。", breakdown: ["言", "兌"], logic: "出口心意。", story: "口訣：能把心裡的喜悅（兌）用言語（言）講出來，就是說。" },
+    "誰": { grade: "1A", zhuyin: "ㄕㄨㄟˊ", comp: "speech", definition: "用來問不知道名字的人。", phrases: ["是誰", "誰的"], sentence: "你知道是誰在外面門口敲門敲得叮叮咚咚響嗎？", breakdown: ["言", "隹"], logic: "言詢如鳥。", story: "口訣：到處問（言）那隻飛來飛去的小鳥（隹）到底是誰？" },
+    "寫": { grade: "1B", zhuyin: "ㄒㄧㄝˇ", comp: "speech", definition: "用筆記錄文字。", phrases: ["寫字", "寫作", "寫信"], sentence: "他正坐在書桌前，專心寫下要寄給好朋友的明信片。", breakdown: ["宀", "舄"], logic: "在室內紀錄。", story: "口訣：待在屋頂（宀）下的小鳥（舄）用爪子在泥土上寫寫畫畫。" },
+    "話": { grade: "1B", zhuyin: "ㄏㄨㄚˋ", comp: "speech", definition: "說出來的言語。", phrases: ["說話", "電話", "聽話"], sentence: "聽我說完這句重要的真心話，你再做決定好嗎？", breakdown: ["言", "舌"], logic: "言在舌出。", story: "口訣：所有的語言（言）都是靠舌（舌）頭轉動才能說出話來。" },
+    "課": { grade: "1B", zhuyin: "ㄎㄜˋ", comp: "speech", definition: "教學的段落或學習的單元。", phrases: ["上課", "課本", "下課"], sentence: "老師教我們認真學習國語課本裡這一課最深入的單字。", breakdown: ["言", "果"], logic: "言語之實。", story: "口訣：上課講求言（言）語溝通，能結出學習的好果（果）實。" },
+    "記": { grade: "1B", zhuyin: "ㄐㄧˋ", comp: "speech", definition: "保存在腦海裡不遺忘。", phrases: ["記住", "日記", "紀念"], sentence: "這是一件非常難忘的事情，我一定會牢牢銘記在心中。", breakdown: ["言", "己"], logic: "留於自己。", story: "口訣：把別人說的話（言）牢牢存在自（己）腦海中，就是記住。" },
+    "試": { grade: "1B", zhuyin: "ㄕˋ", comp: "speech", definition: "檢驗或嘗試看看。", phrases: ["嘗試", "考試", "試試看"], sentence: "大家都摩拳擦掌，想去大操場上試試看自己的跑步身手。", breakdown: ["言", "式"], logic: "言如檢核。", story: "口訣：照著考試（式）的規矩寫下言（言）語回答，試試看吧！" },
+    "習": { grade: "2A", zhuyin: "ㄒㄧˊ", comp: "speech", definition: "反覆練習或積久養成的行為。", phrases: ["習慣", "學習", "見習"], sentence: "我們要溫故而知新，每天晚上都要好好複習學過的功課。", breakdown: ["羽", "白"], logic: "鳥在白練飛。", story: "口訣：小鳥拍著（羽）毛翅膀，趁著大（白）天努力練習飛翔。" },
+    "證": { grade: "2A", zhuyin: "ㄓㄥˋ", comp: "speech", definition: "用來作為憑據的東西或證明。", phrases: ["證明", "證件", "證人"], sentence: "胸前的學生證是我們進入校園圖書館大門的安全證明文件。", breakdown: ["言", "登"], logic: "言記錄上冊。", story: "口訣：把說過的話（言）登記（登）在簿子上，就能作為證明。" },
+    "認": { grade: "2A", zhuyin: "ㄖㄣˋ", comp: "speech", definition: "分辨清楚或同意。", phrases: ["認真", "認識", "認錯"], sentence: "那位新同學非常認真，對班上的老師和同學都非常有禮貌。", breakdown: ["言", "忍"], logic: "言領會於心。", story: "口訣：強忍（忍）著不說錯話（言），仔細辨認清楚才開口。" },
+    "識": { grade: "2A", zhuyin: "ㄕˋ", comp: "speech", definition: "知道、了解。", phrases: ["知識", "認識", "常識"], sentence: "我們都要認真學習識字，長大後才能讀懂更多好書。", breakdown: ["言", "戠"], logic: "言語之誌。", story: "口訣：用言（言）語說出特別的標幟（戠），讓大家都能認識。" },
+    "讀": { grade: "2A", zhuyin: "ㄉㄨˊ", comp: "speech", definition: "大聲地照著書本念出聲。", phrases: ["讀書", "閱讀", "朗讀"], sentence: "妹妹正大聲讀出國語課本裡最動人的老奶奶故事情節。", breakdown: ["言", "賣"], logic: "言交流傳。", story: "口訣：把書上的言（言）語大聲向街上叫（賣）一樣讀出來。" },
+    "謎": { grade: "2A", zhuyin: "ㄇㄧˊ", comp: "speech", definition: "供人猜測的隱語。", phrases: ["謎語", "猜謎", "謎底"], sentence: "今天晚上，猜謎語是我們全家最喜歡玩的小客廳聚會活動。", breakdown: ["言", "迷"], logic: "令人著迷言。", story: "口訣：說出的話（言）讓人迷（迷）失找不到答案，這就是謎語。" },
+    "答": { grade: "2A", zhuyin: "ㄉㄚˊ", comp: "speech", definition: "回答別人的問題。", phrases: ["回答", "答應", "答案"], sentence: "這份數學考卷的答案寫得非常正確完美，請大家拍手鼓勵。", breakdown: ["竹", "合"], logic: "合契而對。", story: "口訣：在竹（竹）簡上寫下與問題相（合）的文字，給出一個對的答案。" },
+    "訴": { grade: "2B", zhuyin: "ㄙㄨˋ", comp: "speech", definition: "告訴別人。", phrases: ["告訴", "訴說", "起訴"], sentence: "如果你在學校遇到困難，請勇敢把原因向老師或媽媽訴說。", breakdown: ["言", "斥"], logic: "當眾口訴。", story: "口訣：用言（言）語把心中的排斥（斥）講出來，向人訴苦。" },
+    "託": { grade: "2B", zhuyin: "ㄊㄨㄛ", comp: "speech", definition: "委託別人代辦事情。", phrases: ["拜託", "委託", "寄託"], sentence: "這是一份重大的送主任委託工作，我們一定要達成使命。", breakdown: ["言", "乇"], logic: "言之寄託。", story: "口訣：用言（言）語把事情交代給一個可以依靠托（乇）付的好人。" },
+
+    // 10. 艸部 (8 個)
+    "草": { grade: "1A", zhuyin: "ㄘㄠˇ", comp: "grass", definition: "草本植物的總稱。", phrases: ["綠草", "草地", "草原"], sentence: "可愛的小白兔最喜歡在綠油油的草坪上玩耍蹦跳。", breakdown: ["艸", "早"], logic: "早起之鮮綠。", story: "口訣：早（早）晨的陽光照在青草（艸）上，充滿生命力。" },
+    "花": { grade: "1A", zhuyin: "ㄏㄨㄚ", comp: "grass", definition: "植物開花供人觀賞的部分。", phrases: ["花朵", "開花", "花瓶"], sentence: "溫暖的春天一到，花園裡萬物都開出了漂亮的花朵。", breakdown: ["艸", "化"], logic: "草木之變遷。", story: "口訣：草（艸）木經過神奇的變化（化），綻放成美麗的花蕊。" },
+    "葉": { grade: "1B", zhuyin: "ㄧㄝˋ", comp: "grass", definition: "植物行光合作用的部分。", phrases: ["樹葉", "落葉", "茶葉"], sentence: "秋天到了，金黃色的枯樹葉紛紛落下，鋪滿了整條小路。", breakdown: ["艸", "世", "木"], logic: "木之千秋繁延波。", story: "口訣：一片片的草（艸）木（木）生生世世（世）長出新葉子。" },
+    "菜": { grade: "2A", zhuyin: "ㄘㄞˋ", comp: "grass", definition: "可以當作食物的蔬菜植物。", phrases: ["蔬菜", "青菜", "菜市場"], sentence: "這是一盤媽媽親手用愛心炒的新鮮無農藥小白菜。", breakdown: ["艸", "采"], logic: "摘收草本。", story: "口訣：伸手採（采）摘下來的草（艸）本植物，就是新鮮健康的蔬菜。" },
+    "苔": { grade: "2A", zhuyin: "ㄊㄞˊ", comp: "grass", definition: "生長在潮濕地方的暗綠色微小植物。", phrases: ["青苔", "苔蘚", "海苔"], sentence: "下過了幾天大雨，小溪旁邊潮濕的牆角又長出了綠青苔。", breakdown: ["艸", "台"], logic: "層疊台貌之草。", story: "口訣：生長在陽台（台）濕潤角落的小草（艸）就是苔。" },
+    "蔬": { grade: "2A", zhuyin: "ㄕㄨ", comp: "grass", definition: "可以吃的草本植物（蔬菜）。", phrases: ["蔬菜", "蔬果", "果蔬"], sentence: "為了身體健康著想，我们應該要養成天天吃蔬菜果實的好習慣喔。", breakdown: ["艸", "疏"], logic: "暢通腸胃。之源。", story: "口訣：吃下這草（艸）本植物有助於疏（疏）通腸胃，這就是蔬菜的好處。" },
+    "荷": { grade: "2B", zhuyin: "ㄏㄜˊ", comp: "grass", definition: "蓮花的別稱；或指負荷、承受。", phrases: ["荷花", "荷葉", "負荷"], sentence: "輕柔的微風輕輕吹過水面，池子中央的綠色荷葉像在對我們點點頭。", breakdown: ["艸", "何"], logic: "承重之力。", story: "口訣：為什麼（何）這張大大的草（艸）葉可以浮在水面上？原來是荷葉呀。" },
+    "藥": { grade: "2B", zhuyin: "ㄧㄠˋ", comp: "grass", definition: "可以治病的物質。", phrases: ["吃藥", "藥水", "藥物"], sentence: "良藥苦口利於病，大家如果不小心生病了，請不要害怕吃藥。", breakdown: ["艸", "樂"], logic: "使人康樂之草。", story: "口訣：用有魔法的草（艸）讓人恢復健康和快快樂樂（樂），那就是神奇的藥。" },
+
+    // 11. 糸部 (7 個)
+    "綠": { grade: "1B", zhuyin: "ㄌㄩˋ", comp: "silk", definition: "像青草或樹葉的顏色。", phrases: ["綠色", "綠豆", "綠葉"], sentence: "陽光下的草地綠意盎然，看著令人心情舒暢、心曠神怡。", breakdown: ["糹", "彔"], logic: "絲線之木綠色。", story: "口訣：用美麗的絲線（糹）染成樹林（彔）般的綠色。" },
+    "紅": { grade: "1B", zhuyin: "ㄏㄨㄥˊ", comp: "silk", definition: "像血或成熟蘋果的顏色。", phrases: ["紅色", "紅寶石", "紅豆"], sentence: "快要下山的太陽公公有一張紅通通的溫暖大臉盤。", breakdown: ["糹", "工"], logic: "工匠染成之赤。", story: "口訣：染布工（工）匠用心把白色的絲線（糹）染成鮮豔的紅色。" },
+    "給": { grade: "1B", zhuyin: "ㄍㄟˇ", comp: "silk", definition: "交付、送給或讓與。", phrases: ["送給", "交給", "給予"], sentence: "真的很謝謝你送給我這本好看的童話書，讓我有一個快樂的學習機會。", breakdown: ["糹", "合"], logic: "如線合流交予。", story: "口訣：把很多絲線（糹）合（合）在一起綁好，雙手交給別人。" },
+    "緊": { grade: "2A", zhuyin: "ㄐㄧㄣˇ", comp: "silk", definition: "事物緊密相連不鬆脫。", phrases: ["緊張", "緊閉", "緊緊"], sentence: "大隊接力比賽快開始了，選手們的心情都感到非常緊繃又刺激。", breakdown: ["糹", "臤"], logic: "韌線之堅臣。", story: "口訣：像堅（臤）強的大臣一樣把絲線（糹）拉得很牢固不放手。" },
+    "線": { grade: "2A", zhuyin: "ㄒㄧㄢˋ", comp: "silk", definition: "用絲或棉所搓成的細長條物。", phrases: ["毛線", "直線", "畫線"], sentence: "溫柔的媽媽正坐在燈光下，一針一線地幫我縫補褲子上的小破洞。", breakdown: ["糹", "泉"], logic: "絲泉如注。", story: "口訣：細細的絲（糹）物長得就像山泉（泉）水一樣綿長不絕。" },
+    "絲": { grade: "2B", zhuyin: "ㄙ", comp: "silk", definition: "蠶吐出用來結繭的細長物質。", phrases: ["絲線", "蠶絲", "絲帶"], sentence: "白白的可愛小蠶寶寶正乖乖趴在竹簍裡大口吃著桑葉，準備要吐絲。", breakdown: ["絲"], logic: "象形二絲。", story: "口訣：兩條細細長長的纖維交織在一起，那就是柔軟的絲線。" },
+    "終": { grade: "2B", zhuyin: "ㄓㄨㄥ", comp: "silk", definition: "事物的盡頭或完結。", phrases: ["終點", "終於", "始終"], sentence: "經過了一整天的大挑戰與長途跋涉，我們終於成功抵達了遊戲終點站。", breakdown: ["糹", "冬"], logic: "冬季結案。", story: "口訣：就像寒冷的冬（冬）天是一年的結束，絲線（糹）也到了盡頭。" },
+
+    // 12. 虫部 (10 個)
+    "蛙": { grade: "2A", zhuyin: "ㄨㄚ", comp: "insect", definition: "兩棲類動物，會跳躍和游泳。", phrases: ["青蛙", "蛙鳴", "牛蛙"], sentence: "寧靜的池塘邊住著幾隻大眼睛、大口吃害蟲的好朋友青蛙。", breakdown: ["虫", "圭"], logic: "田蛙之聲。", story: "口訣：躲在土（圭）裡的小蟲（虫）發出哇哇叫聲，原來是青蛙。" },
+    "螃": { grade: "2A", zhuyin: "ㄆㄤˊ", comp: "insect", definition: "節肢動物，身上有硬殼，有兩隻大螯。", phrases: ["螃蟹"], sentence: "這隻大螃蟹揮動著兩隻長滿刺的大螯，橫著走路看起來真是非常威風。", breakdown: ["虫", "旁"], logic: "側行之虫。", story: "口訣：這隻小動物（虫）總是喜歡往旁邊（旁）橫著走，那就是螃蟹。" },
+    "蟹": { grade: "2A", zhuyin: "ㄒㄧㄝˋ", comp: "insect", definition: "螃蟹等甲殼類動物的總稱。", phrases: ["螃蟹", "蟹肉"], sentence: "清澈的河邊小溪裡，我們幸運地發現了幾隻正在吐泡泡的黑褐色小蟹。", breakdown: ["解", "虫"], logic: "解開硬殼之虫。", story: "口訣：這隻小動物（虫）有一身硬殼，要有技巧才能解（解）開牠吃到美味。" },
+    "蝦": { grade: "2A", zhuyin: "ㄒㄧㄚ", comp: "insect", definition: "生活在水中的節肢動物，有長觸角。", phrases: ["蝦子", "蝦仁", "龍蝦"], sentence: "那一隻隻活潑的紅色小蝦，在漂亮的水族箱裡自在地游來游去。", breakdown: ["虫", "叚"], logic: "隱蔽假色虫。", story: "口訣：這隻小動物（虫）煮熟後會變換假（叚）的紅顏色，原來是蝦子呀。" },
+    "蚯": { grade: "2B", zhuyin: "ㄑㄧㄡ", comp: "insect", definition: "蚯蚓。", phrases: ["蚯蚓"], sentence: "蚯蚓在泥土裡努力鑽呀鑽，可以幫忙鬆土，是農夫種田最喜歡的好幫手。", breakdown: ["虫", "丘"], logic: "丘陵地龍。", story: "口訣：這條像是躲在小山丘（丘）旁的細長蟲（虫）子就是蚯蚓。" },
+    "蚓": { grade: "2B", zhuyin: "ㄧㄣˇ", comp: "insect", definition: "生活在泥土裡、身體柔軟細長的蟲。", phrases: ["蚯蚓"], sentence: "這條灰溜溜的蚯蚓雖然沒有長眼睛，但是他鑽土壤洞穴的技術可是一流的。", breakdown: ["虫", "引"], logic: "引導行進之肢。", story: "口訣：像長線一樣引（引）導著身體向前爬動的小蟲（虫），就是蚯蚓。" },
+    "蝌": { grade: "2B", zhuyin: "ㄎㄜ", comp: "insect", definition: "青蛙或蟾蜍小時候的樣子。", phrases: ["蝌蚪"], sentence: "你知道嗎？黑漆漆的小蝌蚪長大以後，牠的小尾巴會慢慢消失不見喔。", breakdown: ["虫", "科"], logic: "禾實般粒之虫。", story: "口訣：這隻像豆子般大（科）的水中小蟲（虫），長大會變成青蛙。" },
+    "蚪": { grade: "2B", zhuyin: "ㄉㄡˇ", comp: "insect", definition: "蝌蚪，有大頭和長尾巴。", phrases: ["蝌蚪"], sentence: "成群結隊的活潑小蝌蚪在青綠色的水草間愉快地游來游去，想要找媽媽。", breakdown: ["虫", "斗"], logic: "如勺（斗）之虫。", story: "口訣：帶著一條尾巴像個小漏斗（斗）的水中小蟲（虫），真可愛。" },
+    "蜘": { grade: "2B", zhuyin: "ㄓ", comp: "insect", definition: "蜘蛛，一種會吐絲結網來捕蟲的動物。", phrases: ["蜘蛛"], sentence: "神奇的蜘蛛在織網時非常有耐性，編織得一絲一毫都不亂，真像個藝術家。", breakdown: ["虫", "知"], logic: "知曉結網之虫。", story: "口訣：非常聰明有知（知）識，懂得織出美麗大網來抓獵物的小蟲（虫）。" },
+    "蛛": { grade: "2B", zhuyin: "ㄓㄨ", comp: "insect", definition: "蜘蛛。", phrases: ["蜘蛛", "蛛絲馬跡"], sentence: "花園角落這隻毛茸茸的蜘蛛長得好大，正靜靜地等著會飛的昆蟲自己上鉤。", breakdown: ["虫", "朱"], logic: "如珠寶粒虫。", story: "口訣：圓圓滾滾像顆紅色珍珠（朱）掛在網上的小爬蟲（虫）。" },
+
+    // 13. 日部 (10 個)
+    "星": { grade: "1A", zhuyin: "ㄒㄧㄥ", comp: "sun", definition: "夜空中發光的天體。", phrases: ["星星", "星球", "星空"], sentence: "我真想摘下一顆最明亮漂亮的星星當作生日禮物送給媽媽。", breakdown: ["日", "生"], logic: "日生之光感。", story: "口訣：夜晚的天空生（生）出了一點一點的小日（日）頭，那就是星星。" },
+    "早": { grade: "1A", zhuyin: "ㄗㄠˇ", comp: "sun", definition: "太陽剛出來的時候；或時間提前。", phrases: ["早安", "早上", "早餐"], sentence: "俗話說早起的鳥兒有蟲吃，大家明天早上要記得早一點起床。", breakdown: ["日", "十"], logic: "日照頭頂。", story: "口訣：太陽（日）像是一把十（十）字弓，早早射出光芒喚醒大地。" },
+    "時": { grade: "1B", zhuyin: "ㄕˊ", comp: "sun", definition: "時間、時候或季節。", phrases: ["時間", "時候", "時鐘"], sentence: "美好的時間就像河流一樣一分一秒地過去，我們一定要好好珍惜它。", breakdown: ["日", "寺"], logic: "日測光段。", story: "口訣：在寺（寺）廟裡聽著鐘聲，看著太陽（日）影子移動，這就是時間。" },
+    "陽": { grade: "1B", zhuyin: "ㄧㄤˊ", comp: "sun", definition: "太陽，帶給地球光與熱的星星。", phrases: ["陽光", "太陽", "陽台"], sentence: "熱情的太陽公公出來了，照得地上暖洋洋的，今天又是個出遊好天氣。", breakdown: ["阝", "昜"], logic: "山頭之光。", story: "口訣：太陽光（昜）照在山坡（阝）上，溫暖又明亮。" },
+    "候": { grade: "2A", zhuyin: "ㄏㄡˋ", comp: "sun", definition: "等待或某一個時間事物。", phrases: ["等候", "時候", "氣候"], sentence: "等候公車的時候需要很多耐心，請大家千萬不要在危險的馬路邊玩耍。", breakdown: ["亻", "侯"], logic: "人射標靶待訊。", story: "口訣：人們（亻）像諸侯（侯）一樣，在宮殿外耐心等候召見。" },
+    "晴": { grade: "2A", zhuyin: "ㄑㄧㄥˊ", comp: "sun", definition: "天上沒有雲的好天氣。", phrases: ["晴朗", "晴天", "放晴"], sentence: "大晴天的時候出門踏青郊遊，吹著微風，看著藍天，心情覺得最舒暢快樂了。", breakdown: ["日", "青"], logic: "日出而天青。", story: "口訣：太陽（日）高掛天上，天空變得青（青）藍又美麗，這就是晴天。" },
+    "晚": { grade: "2A", zhuyin: "ㄨㄢˇ", comp: "sun", definition: "太陽落下，天黑之後的時間。", phrases: ["晚上", "晚安", "晚餐"], sentence: "今天晚上睡覺之前，別忘了輕輕對爸爸和媽媽說聲晚安作好夢。", breakdown: ["日", "免"], logic: "日消逝也。", story: "口訣：太陽（日）就像小兔子（免）一樣跑進了地平線裡，躲起來了。" },
+    "暗": { grade: "2A", zhuyin: "ㄢˋ", comp: "sun", definition: "光線不足、不亮的地方。", phrases: ["黑暗", "暗處", "暗號"], sentence: "夜深了之後，外面熱鬧的街道慢慢變得黑暗，只剩下微弱的路燈寂靜發光。", breakdown: ["日", "音"], logic: "日隱之影感。", story: "口訣：太陽（日）下山後，只剩下蟲鳥的聲音（音），什麼都看不清楚了。" },
+    "昨": { grade: "2B", zhuyin: "ㄗㄨㄛˊ", comp: "sun", definition: "今天的前一日。", phrases: ["昨天", "昨日", "昨晚"], sentence: "雖然昨天下雨又跌倒，但那些經歷過的美好回憶，我都偷偷記在內心深處了。", breakdown: ["日", "乍"], logic: "日忽過後。", story: "口訣：太陽（日）今天才剛（乍）升起，代表前一天的日子已經變成了昨天。" },
+    "晨": { grade: "2B", zhuyin: "ㄔㄣˊ", comp: "sun", definition: "清晨，太陽剛出來的早晨。", phrases: ["晨跑", "早晨", "清晨"], sentence: "農場裡的公雞喔喔大聲叫了好幾聲，叫醒了正在天邊熟睡的美麗晨曦。", breakdown: ["日", "辰"], logic: "日甦於辰。", story: "口訣：一日（日）之計在於星辰（辰）消退的早晨，要把握美好時光。" },
+
+    // 14. 門部 (6 個)
+    "問": { grade: "1A", zhuyin: "ㄨㄣˋ", comp: "gate", definition: "向別人請教解答。", phrases: ["問題", "學問", "請問"], sentence: "功課上有遇到任何不懂的問題都可以問老師。", breakdown: ["門", "口"], logic: "在門口張口打聽消息。", story: "口訣：嘴巴（口）跑到大門旁，遇見鄰居問東問西找解答。" },
+    "間": { grade: "1A", zhuyin: "ㄐㄧㄢ", comp: "gate", definition: "兩者之中、或稱呼房屋的單位。", phrases: ["中間", "房間", "時間"], sentence: "我的小房間每天都打掃得乾乾淨淨。", breakdown: ["門", "日"], logic: "門縫中看見太陽光射入。", story: "口訣：關起的大門（門）縫裡透出一絲太陽（日）光，照亮了整個小房間。" },
+    "閃": { grade: "2A", zhuyin: "ㄕㄢˇ", comp: "gate", definition: "光亮忽明忽暗；或躲避。", phrases: ["閃亮", "閃電", "躲閃"], sentence: "黑夜的星星像燈泡一樣對著我們閃爍眨眼睛。", breakdown: ["門", "人"], logic: "人躲藏在門側避人閃躲。", story: "口訣：大雨時有個人（人）躲在大門（門）下，看著天空打閃電。" },
+    "門": { grade: "2A", zhuyin: "ㄇㄣˊ", comp: "gate", definition: "房屋的入口處或開關推拉的板子。", phrases: ["開門", "門口", "大門"], sentence: "離開教室的時候請記得把大門關上。", breakdown: ["門"], logic: "象形兩扇門扉合起的樣子。", story: "口訣：兩扇高高的木板，推進這扇大門，就有精彩的探險等著你。" },
+    "閒": { grade: "2A", zhuyin: "ㄒㄧㄢˊ", comp: "gate", definition: "沒有事情做、空暇的。", phrases: ["悠閒", "空閒", "閒聊"], sentence: "安靜的客廳裡，爸爸正在悠閒地看報紙吃茶點。", breakdown: ["門", "月"], logic: "門縫透月光，在安靜中度過時光。", story: "口訣：打開門（門）欣賞天上安靜的彎月亮（月），享受悠閒的好時光。" },
+    "闖": { grade: "2A", zhuyin: "ㄔㄨㄤˇ", comp: "gate", definition: "猛烈地向前衝過。", phrases: ["闖紅燈", "闖禍", "破門而闖"], sentence: "過馬路千萬不可以在馬路上闖紅燈，非常危險。", breakdown: ["門", "馬"], logic: "馬匹衝破門戶亂跑。", story: "口訣：一匹小馬（馬）不受控制，用力撞開木門（門）闖了出去！" },
+
+    // 15. 雨部 (5 個)
+    "雨": { grade: "1B", zhuyin: "ㄩˇ", comp: "rain", definition: "天空中落下來的水滴。", phrases: ["下雨", "雨衣", "雨傘"], sentence: "炎熱的夏日午後一場大雨過後，空氣變得涼爽又充滿泥土的清新迷人味道。", breakdown: ["雨"], logic: "象形雲聚落水。", story: "口訣：天空裡有一朵大烏雲，落下了四滴清涼的小水滴。" },
+    "雲": { grade: "2A", zhuyin: "ㄩㄣˊ", comp: "rain", definition: "水蒸氣凝聚浮在空中的水滴或冰晶。", phrases: ["白雲", "烏雲", "雲朵"], sentence: "常常抬頭看看天空那片壯觀的白雲海，可以發現它變化多端真是有趣極了。", breakdown: ["雨", "云"], logic: "天雨聚如云團旋。", story: "口訣：天上下著毛毛雨（雨），有人說（云）天空變得好美麗呀。" },
+    "電": { grade: "2A", zhuyin: "ㄉㄧㄢˋ", comp: "rain", definition: "一種物質能量，會發光發熱。", phrases: ["電視", "電力", "閃電"], sentence: "看電視機或吹冷氣都會大大的用掉電力，我們每天都要隨手關燈節約能源喔。", breakdown: ["雨", "申"], logic: "雨中伸展強能軌。", story: "口訣：下雨（雨）天時，老天爺向著大地伸（申）出了刺眼的亮光。" },
+    "雪": { grade: "2B", zhuyin: "ㄒㄩㄝˇ", comp: "rain", definition: "天空落下白色的柔軟結晶。", phrases: ["雪人", "下雪", "白雪"], sentence: "等寒流來了天氣變很冷的時候，我們全家人要一起去高山上滾雪球、堆一個大雪人。", breakdown: ["雨", "彐"], logic: "像豬毛般白白的雪。", story: "口訣：天上下的水（雨）碰到了冷空氣，結成了一片片的小雪花（彐）。" },
+    "露": { grade: "2B", zhuyin: "ㄌㄨˋ", comp: "rain", definition: "夜間水氣凝結成的小水珠。", phrases: ["露水", "露出", "露天"], sentence: "我們要做個有修養的好孩子，千萬別讓你的生氣壞脾氣在大眾面前流露出來喔。", breakdown: ["雨", "路"], logic: "雨在大道後凝結。", story: "口訣：早晨在馬路（路）邊的草地上，發現像下雨（雨）一樣凝結的水珠。" },
+
+    // 16. 鳥/隹部 (7 個)
+    "雀": { grade: "1B", zhuyin: "ㄑㄩㄝˋ", comp: "bird", definition: "體型小巧的小鳥如麻雀。", phrases: ["麻雀", "孔雀", "歡呼雀躍"], sentence: "大森林裡的那隻華麗漂亮孔雀，正在對著遊客展開羽毛，看起來真是色彩鮮豔奪目。", breakdown: ["小", "隹"], logic: "指體型微小的鳥。", story: "口訣：一隻長得特別小（小）的鳥（隹）兒坐在屋梁上嘰嘰喳喳叫。" },
+    "雙": { grade: "1B", zhuyin: "ㄕㄨㄤ", comp: "bird", definition: "兩個或成對的。", phrases: ["雙手", "雙胞胎", "一雙鞋"], sentence: "花園裡有成雙成對的漂亮小蝴蝶，正在五顏六色的花叢中間愉快地跳舞玩耍。", breakdown: ["隹", "隹", "又"], logic: "手抓二鳥而合對。", story: "口訣：一又（又）一隻的鳥（隹）鳥（隹）靠在一起，牠們是一對好朋友。" },
+    "隻": { grade: "2A", zhuyin: "ㄓ", comp: "bird", definition: "計算動物的單位。", phrases: ["一隻小鳥", "兩隻老虎", "隻身"], sentence: "公園轉角那隻有著黑亮毛皮的快樂小黃狗，正開心地對著我們用力搖尾巴呢。", breakdown: ["隹", "又"], logic: "手抓一鳥。", story: "口訣：伸出你的右手（又），掌心裡正好停著一隻小鳥（隹）。" },
+    "雞": { grade: "2B", zhuyin: "ㄐㄧ", comp: "bird", definition: "常見的家禽，頭上有紅冠。", phrases: ["母雞", "雞蛋", "雞腿"], sentence: "農場裡胖嘟嘟的母雞媽媽，正帶領著一群黃色毛茸茸的小雞去草地裡高興地抓蟲吃。", breakdown: ["奚", "隹"], logic: "被人類圈養的鳥。", story: "口訣：像奴隸（奚）一樣在院子裡走來走去替人下蛋的鳥（隹），就是雞。" },
+    "鴨": { grade: "2B", zhuyin: "ㄧㄚ", comp: "bird", definition: "嘴巴扁平、腳有蹼會游泳的鳥類。", phrases: ["鴨子", "鴨蛋", "烤鴨"], sentence: "公園的大池塘裡有一大群可愛的黃色小鴨子排著整齊隊伍，嘎嘎叫著游泳過來。", breakdown: ["甲", "鳥"], logic: "叫聲嘎嘎的鳥。", story: "口訣：這隻有翅膀的鳥（鳥），發出像甲（甲）木相擊的響亮嘎嘎聲音。" },
+    "鵝": { grade: "2B", zhuyin: "ㄜˊ", comp: "bird", definition: "體型比鴨子大，脖子很長的水禽。", phrases: ["天鵝", "企鵝", "白鵝"], sentence: "農舍旁這隻有著白雪般羽毛的胖大白鵝高高伸長了脖子，對著路人展現威風大聲嘎嘎叫。", breakdown: ["我", "鳥"], logic: "體格跟人一樣大的鳥。", story: "口訣：這隻漂亮的大水鳥（鳥），自豪地昂首挺胸說著：『這池塘是屬於我（我）的！』" },
+    "鴿": { grade: "2B", zhuyin: "ㄍㄜ", comp: "bird", definition: "溫馴的鳥類，常用來象徵和平。", phrases: ["鴿子", "信鴿", "白鸽"], sentence: "這群經過訓練的聰明信鴿可以幫古人傳遞重要書信，真的是個最不可思議的得力小幫手。", breakdown: ["合", "鳥"], logic: "集合之鳥也。", story: "口訣：只要吹一聲口哨，鳥（鳥）兒們就會乖乖集結會合（合）在一起。" }
+  }
+};
+
+const defaultUsers = [
+  { id: 'admin', name: '大師老師', role: 'teacher', password: '123' }
+];
+
+</script>
+    <script>
+console.log('Zi-Part-Quest App Script Loading...');
+let currentUser = null;
+let currentArea = null;
+let currentChar = null;
+let selectedGrade = '1A';
+let activeIslandId = 'all';
+
+// Global Game State
+let userXP = 0;
+let masteredChars = new Set();
+
+// Load Library Data from LocalStorage if available
+const CUSTOM_LIB_KEY = 'characterQuest_customLibrary';
+function syncToCloud() {
+    const data = {
+        xp: userXP,
+        mastered: Array.from(masteredChars),
+        timestamp: new Date().toISOString()
+    };
+    console.log("Syncing to cloud...", data);
+    alert("✨ 學習紀錄已成功同步至雲端（模擬）！教師現在可以從後台查看您的進度。");
+}
+function loadLibrary() {
+    const saved = localStorage.getItem(CUSTOM_LIB_KEY);
+    if (saved) {
+        const customChars = JSON.parse(saved);
+        libraryData.characters = { ...libraryData.characters, ...customChars };
+    }
+}
+loadLibrary();
+
+// =====================
+// 漢語拼音 Pinyin Lookup Table
+// =====================
+const PINYIN_MAP = {
+    // 女部
+    "好":"hǎo","媽":"mā","姐":"jiě","妹":"mèi","她":"tā","奶":"nǎi","妙":"miào","姑":"gū","娘":"niáng",
+    // 手部
+    "手":"shǒu","招":"zhāo","找":"zhǎo","拍":"pāi","拿":"ná","幫":"bāng","拉":"lā","推":"tuī",
+    "把":"bǎ","抓":"zhuā","搶":"qiǎng","接":"jiē","搖":"yáo","撥":"bō","指":"zhǐ","甩":"shuǎi",
+    "提":"tí","擔":"dān","扭":"niǔ","換":"huàn","捧":"pěng","掉":"diào","抱":"bào","持":"chí",
+    "操":"cāo","搗":"dǎo",
+    // 人部
+    "你":"nǐ","他":"tā","們":"men","人":"rén","像":"xiàng","什":"shén","但":"dàn","借":"jiè",
+    "住":"zhù","做":"zuò","健":"jiàn","候":"hòu","件":"jiàn","伸":"shēn","倒":"dǎo","介":"jiè",
+    "保":"bǎo","伴":"bàn","傳":"chuán","信":"xìn",
+    // 口部
+    "吹":"chuī","問":"wèn","叫":"jiào","嗎":"ma","哈":"hā","右":"yòu","和":"hé","呀":"ya",
+    "唱":"chàng","呢":"ne","吧":"ba","啊":"a","咬":"yǎo","吃":"chī","哭":"kū","呱":"guā",
+    "聞":"wén","嘴":"zuǐ","名":"míng","哪":"nǎ","盒":"hé","口":"kǒu","對":"duì","念":"niàn",
+    "巴":"bā","哇":"wā","喝":"hē","呵":"hē","呼":"hū","吵":"chǎo","吐":"tǔ","嚇":"xià","告":"gào",
+    // 水部
+    "水":"shuǐ","沒":"méi","泡":"pào","池":"chí","涼":"liáng","河":"hé","游":"yóu","溫":"wēn",
+    "漂":"piāo","滿":"mǎn","消":"xiāo","法":"fǎ","灘":"tān","海":"hǎi","溪":"xī","活":"huó",
+    "清":"qīng","沖":"chōng","澡":"zǎo","浴":"yù","減":"jiǎn","浮":"fú","波":"bō","滴":"dī",
+    "浪":"làng","渴":"kě","洗":"xǐ","泥":"ní","漸":"jiàn","淚":"lèi",
+    // 木部
+    "棵":"kē","樹":"shù","桌":"zhuō","樣":"yàng","材":"cái","桶":"tǒng","木":"mù","植":"zhí",
+    "根":"gēn","棍":"gùn","棒":"bàng",
+    // 足部
+    "走":"zǒu","跑":"pǎo","路":"lù","跳":"tiào","步":"bù","越":"yuè","腳":"jiǎo","跡":"jī",
+    "踢":"tī","足":"zú",
+    // 心部
+    "心":"xīn","想":"xiǎng","快":"kuài","急":"jí","情":"qíng","忍":"rěn","忘":"wàng","怎":"zěn",
+    "意":"yì","思":"sī","怪":"guài","總":"zǒng","慢":"màn","煩":"fán","怕":"pà",
+    // 言部
+    "請":"qǐng","說":"shuō","誰":"shuí","寫":"xiě","話":"huà","課":"kè","記":"jì","試":"shì",
+    "習":"xí","證":"zhèng","認":"rèn","識":"shì","讀":"dú","謎":"mí","答":"dá","訴":"sù","託":"tuō",
+    // 艸部
+    "草":"cǎo","花":"huā","葉":"yè","菜":"cài","苔":"tái","蔬":"shū","荷":"hé","藥":"yào",
+    // 糸部
+    "綠":"lǜ","紅":"hóng","給":"gěi","緊":"jǐn","線":"xiàn","絲":"sī","終":"zhōng",
+    // 虫部
+    "蛙":"wā","螃":"páng","蟹":"xiè","蝦":"xiā","蚯":"qiū","蚓":"yǐn","蝌":"kē","蚪":"dǒu",
+    "蜘":"zhī","蛛":"zhū",
+    // 日部
+    "星":"xīng","早":"zǎo","時":"shí","陽":"yáng","晴":"qíng","晚":"wǎn","暗":"àn","昨":"zuó","晨":"chén",
+    // 門部
+    "間":"jiān","閃":"shǎn","門":"mén","閒":"xián","闖":"chuǎng",
+    // 雨部
+    "雨":"yǔ","雲":"yún","電":"diàn","雪":"xuě","露":"lù",
+    // 鳥部
+    "雀":"què","雙":"shuāng","隻":"zhī","雞":"jī","鴨":"yā","鵝":"é","鴿":"gē"
+};
+
+function getPinyin(char) {
+    return PINYIN_MAP[char] || '';
+}
+
+function getZhuyin(char) {
+    const data = libraryData.characters[char];
+    return data ? data.zhuyin : '';
+}
+
+function getRubyHTML(phrase) {
+    if (!phrase) return '';
+    return phrase.split('').map(c => {
+        const z = getZhuyin(c);
+        return z ? `<ruby>${c}<rt style="font-size: 0.5em; color: #94a3b8;">${z}</rt></ruby>` : c;
+    }).join('');
+}
+
+// Drawing State... (existing unchanged code)
+let isDrawing = false;
+let ctx = null;
+let currentTool = 'brush';
+let currentColor = '#000000';
+
+// =====================
+// Text-to-Speech (TTS) System
+// =====================
+let ttsVoice = null;
+function initTTS() {
+    const loadVoices = () => {
+        const voices = speechSynthesis.getVoices();
+        // Prefer zh-TW, then zh-CN, then any Chinese voice
+        ttsVoice = voices.find(v => v.lang === 'zh-TW')
+                || voices.find(v => v.lang.startsWith('zh'))
+                || null;
+    };
+    loadVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+    }
+}
+
+function speakText(text, rate = 0.8) {
+    if (!('speechSynthesis' in window)) {
+        console.warn('此瀏覽器不支援語音合成');
+        return;
+    }
+    speechSynthesis.cancel(); // Stop any current speech
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-TW';
+    utterance.rate = rate;
+    utterance.pitch = 1.1;
+    utterance.volume = 1;
+    if (ttsVoice) utterance.voice = ttsVoice;
+    
+    // Visual feedback - find and animate the clicked button
+    const activeBtn = document.querySelector('.speak-btn.speaking');
+    if (activeBtn) activeBtn.classList.remove('speaking');
+    
+    speechSynthesis.speak(utterance);
+}
+
+function speakChar(char) {
+    speakText(char, 0.6); // Slower for single character
+}
+
+function speakPhrase(text) {
+    speakText(text, 0.85);
+}
+
+function speakSentence(text) {
+    speakText(text, 0.9);
+}
+
+// Speak button with animation helper
+function createSpeakBtnHTML(text, size = '1.2rem', label = '', rate = 0.8) {
+    const escaped = text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const title = label || `朗讀「${text}」`;
+    return `<button class="speak-btn" onclick="event.stopPropagation(); this.classList.add('speaking'); speakText('${escaped}', ${rate}); setTimeout(() => this.classList.remove('speaking'), 1200);" title="${title}" style="font-size: ${size};" aria-label="${title}">🔊</button>`;
+}
+
+const STORAGE_PREFIX = 'characterQuest_user_';
+const USERLIST_KEY = 'characterQuest_allStudentNames';
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadSession();
+    initCanvas();
+    initTTS();
+    // Populate form selects
+    const compSelect = document.getElementById('edit-comp-input');
+    if (compSelect) {
+        libraryData.components.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; opt.innerText = `${c.symbol} ${c.name}`;
+            compSelect.appendChild(opt);
+        });
+    }
+    const gradeSelect = document.getElementById('edit-grade-input');
+    if (gradeSelect) {
+        libraryData.grades.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id; opt.innerText = g.name;
+            gradeSelect.appendChild(opt);
+        });
+    }
+});
+
+function loadSession() {
+    const activeUserId = sessionStorage.getItem('characterQuestCurrentUserId');
+    if (activeUserId === 'teacher') {
+        currentUser = { name: '導師', role: 'teacher', id: 'teacher' };
+        showDashboard();
+    } else if (activeUserId) {
+        const saved = localStorage.getItem(STORAGE_PREFIX + activeUserId);
+        if (saved) {
+            currentUser = JSON.parse(saved);
+            selectedGrade = currentUser.grade || '1A';
+            showDashboard();
+        }
+    }
+}
+
+function selectGrade(grade, btn) {
+    selectedGrade = grade;
+    document.querySelectorAll('.btn-grade').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function login(role) {
+    console.log('Login attempt:', role);
+    const nameInput = document.getElementById('usernameInput').value.trim();
+    const name = nameInput || '匿名冒險者';
+    console.log('User name:', name);
+    
+    if (role === 'teacher') {
+        document.getElementById('password-modal').style.display = 'flex';
+        document.getElementById('teacher-pwd-input').focus();
+        return;
+    }
+
+    let savedUser = localStorage.getItem(STORAGE_PREFIX + name);
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        currentUser.grade = selectedGrade;
+        sessionStorage.setItem('characterQuestCurrentUserId', name);
+        showDashboard();
+        if (currentUser.role === 'student') showIntroManual();
+    } else {
+        currentUser = {
+            name: name, role: 'student', grade: selectedGrade,
+            level: 1, xp: 0, mastered: [], drawings: {}, lastActive: Date.now(), stats: {}, abilities: [], badges: []
+        };
+        saveUser();
+        addToUserList(name);
+        sessionStorage.setItem('characterQuestCurrentUserId', name);
+        showDashboard();
+        showIntroManual(); // Show manual on first login
+    }
+}
+
+function showIntroManual() {
+    document.getElementById('intro-modal').style.display = 'flex';
+}
+
+function checkTeacherPassword() {
+    const pwd = document.getElementById('teacher-pwd-input').value;
+    if (pwd === '123') {
+        sessionStorage.setItem('characterQuestCurrentUserId', 'teacher');
+        currentUser = { name: '導師', role: 'teacher', id: 'teacher' };
+        closePasswordModal();
+        showDashboard();
+    } else {
+        alert('密碼錯誤！');
+        document.getElementById('teacher-pwd-input').value = '';
+    }
+}
+
+function closePasswordModal() {
+    document.getElementById('password-modal').style.display = 'none';
+    document.getElementById('teacher-pwd-input').value = '';
+}
+
+function addToUserList(name) {
+    let list = JSON.parse(localStorage.getItem(USERLIST_KEY) || '[]');
+    if (!list.includes(name)) {
+        list.push(name);
+        localStorage.setItem(USERLIST_KEY, JSON.stringify(list));
+    }
+}
+
+function logout() { sessionStorage.removeItem('characterQuestCurrentUserId'); currentUser = null; location.reload(); }
+function saveUser() { if (currentUser && currentUser.role === 'student') { localStorage.setItem(STORAGE_PREFIX + currentUser.name, JSON.stringify(currentUser)); } }
+
+// =====================
+// Cross-Device Share Code System
+// =====================
+function exportStudentShareCode() {
+    if (!currentUser || currentUser.role !== 'student') return;
+    const data = JSON.parse(localStorage.getItem(STORAGE_PREFIX + currentUser.name) || 'null');
+    if (!data) return;
+    // Exclude drawings (too large) - keep stats, mastered, badges, abilities
+    const exportData = {
+        name: data.name,
+        grade: data.grade,
+        level: data.level,
+        xp: data.xp,
+        mastered: data.mastered,
+        badges: data.badges || [],
+        abilities: data.abilities || [],
+        stats: data.stats || {},
+        lastActive: data.lastActive
+    };
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(exportData))));
+    
+    const modal = document.getElementById('share-code-modal');
+    document.getElementById('share-code-output').value = code;
+    modal.style.display = 'flex';
+}
+
+function copyShareCode() {
+    const el = document.getElementById('share-code-output');
+    el.select();
+    document.execCommand('copy');
+    document.getElementById('share-code-copy-btn').innerText = '✅ 已複製！';
+    setTimeout(() => { document.getElementById('share-code-copy-btn').innerText = '📋 複製代碼'; }, 2000);
+}
+
+function importStudentFromCode() {
+    const code = document.getElementById('teacher-import-code').value.trim();
+    if (!code) { alert('請貼入學生的進度代碼'); return; }
+    try {
+        const data = JSON.parse(decodeURIComponent(escape(atob(code))));
+        if (!data.name) throw new Error('格式錯誤');
+        // Save imported student to local storage so teacher can view them
+        const existingList = JSON.parse(localStorage.getItem(USERLIST_KEY) || '[]');
+        if (!existingList.includes(data.name)) {
+            existingList.push(data.name);
+            localStorage.setItem(USERLIST_KEY, JSON.stringify(existingList));
+        }
+        localStorage.setItem(STORAGE_PREFIX + data.name, JSON.stringify({ ...data, role: 'student' }));
+        document.getElementById('teacher-import-code').value = '';
+        document.getElementById('import-feedback').innerText = `✅ 已成功匯入「${data.name}」的進度！`;
+        document.getElementById('import-feedback').style.color = '#4ade80';
+        renderTeacherDashboard();
+    } catch(e) {
+        document.getElementById('import-feedback').innerText = '❌ 代碼格式不正確，請重新確認。';
+        document.getElementById('import-feedback').style.color = '#f87171';
+    }
+}
+
+function showDashboard() {
+    console.log('Showing dashboard for:', currentUser.name);
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('navbar').style.display = 'flex';
+    document.getElementById('userName').innerText = `${currentUser.name} (${selectedGrade})`;
+    if (currentUser.role === 'teacher') { 
+        console.log('Role: Teacher');
+        showScreen('teacher-screen'); 
+        renderTeacherDashboard(); 
+    }
+    else { 
+        console.log('Role: Student');
+        updateStats(); 
+        showScreen('map-screen'); 
+        renderMap(); 
+    }
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(screenId);
+    if (el) el.classList.add('active');
+}
+
+function setDeviceMode(mode) {
+    document.body.classList.remove('device-mobile', 'device-tablet', 'device-pc');
+    if (mode !== 'pc') document.body.classList.add('device-' + mode);
+    
+    document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn-device-' + mode).classList.add('active');
+}
+
+function updateStats() {
+    if (!currentUser) return;
+    document.getElementById('user-level').innerText = currentUser.level;
+    
+    // XP Calculation and Progress Bar
+    const xpForNextLevel = currentUser.level * 100;
+    const progressPercent = (currentUser.xp / xpForNextLevel) * 100;
+    
+    const xpFill = document.getElementById('user-xp-fill');
+    if (xpFill) {
+        xpFill.style.width = progressPercent + '%';
+    }
+    
+    const xpText = document.getElementById('user-xp-text');
+    if (xpText) {
+        xpText.innerText = `${Math.floor(currentUser.xp)} / ${xpForNextLevel}`;
+    }
+
+    const gemTop = document.getElementById('top-bar-gems');
+    if (gemTop && currentUser.stats) {
+        gemTop.innerText = currentUser.stats.gems || 0;
+    }
+
+    const milestoneText = document.getElementById('milestone-text');
+    if (milestoneText) {
+        const remaining = 5 - (currentUser.mastered.length % 5);
+        milestoneText.innerText = remaining === 5 && currentUser.mastered.length > 0 
+            ? "🛡️ 冒險傳送門已開啟！" 
+            : `距冒險還有 ${remaining} 字`;
+    }
+
+    document.getElementById('userName').innerText = currentUser.name;
+    saveUser();
+}
+
+function renderMap() {
+    const mapContainer = document.getElementById('area-map');
+    if (!mapContainer) return;
+    mapContainer.innerHTML = '';
+    libraryData.components.forEach(comp => {
+        const wordsInGrade = Object.keys(libraryData.characters).filter(char => {
+            const data = libraryData.characters[char];
+            return data.comp === comp.id && data.grade === currentUser.grade;
+        });
+        if (wordsInGrade.length === 0 && comp.id !== 'extra') return;
+        const card = document.createElement('div');
+        card.className = `area-card`;
+        card.innerHTML = `<div class="area-img" style="background-color: ${comp.color}; opacity: 0.6"></div>
+            <div class="area-info"><div class="area-title">${getRubyHTML(comp.symbol)} ${comp.name}</div>
+            <p style="font-size: 0.85rem; color: #94a3b8;">${comp.meaning}</p>
+            <p style="font-size: 0.8rem; color: var(--text-gold); margin-top: 5px;">本學期共 ${wordsInGrade.length} 字</p></div>`;
+        card.onclick = () => showLibrary(comp);
+        mapContainer.appendChild(card);
+    });
+}
+
+function showLibrary(area) {
+    currentArea = area;
+    showScreen('library-screen');
+    document.getElementById('area-title-display').innerText = `${area.symbol} ${area.name}`;
+    const charList = document.getElementById('char-list');
+    charList.innerHTML = '';
+    const availableChars = Object.keys(libraryData.characters).filter(char => {
+        const data = libraryData.characters[char];
+        return data.comp === area.id && data.grade === currentUser.grade;
+    });
+    availableChars.forEach(char => {
+        const isMastered = currentUser.mastered.includes(char);
+        const data = libraryData.characters[char];
+        const card = document.createElement('div');
+        card.className = 'character-card';
+        if (isMastered) card.style.borderColor = 'var(--primary-color)';
+        card.innerHTML = `<div class="char-glyph">${char}</div>
+            <div class="char-phonetics">
+                <span class="card-zhuyin-text">${data.zhuyin}</span>
+                <span class="card-pinyin-text">${getPinyin(char)}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; justify-content: center;">
+                <span style="font-size: 0.8rem; color: #94a3b8;">${isMastered ? '✅ 已掌握' : '未學習'}</span>
+                ${createSpeakBtnHTML(char, '1rem', '聽聽看', 0.6)}
+            </div>`;
+        card.onclick = () => openCharModal(char);
+        charList.appendChild(card);
+    });
+}
+
+function openCharModal(char) {
+    currentChar = char;
+    const modal = document.getElementById('char-modal');
+    const body = document.getElementById('modal-body');
+    const data = libraryData.characters[char];
+    const isMastered = currentUser.mastered.includes(char);
+
+    const phrasesText = Array.isArray(data.phrases) ? data.phrases.join('、') : data.phrases;
+    const phrasesArr = Array.isArray(data.phrases) ? data.phrases : (data.phrases ? data.phrases.split('、') : []);
+    const phraseButtons = phrasesArr.map(p => `<span class="phrase-speak-item" style="display:inline-flex; align-items:center; gap:4px; margin-right:10px;">${getRubyHTML(p)} ${createSpeakBtnHTML(p, '0.85rem', '聽聽「' + p + '」', 0.85)}</span>`).join('');
+
+    body.innerHTML = `
+        <div style="display: flex; gap: 2rem; align-items: start;">
+            <div style="flex: 1; text-align: center;">
+                <div style="position: relative; display: inline-block;">
+                    <div style="font-size: 6rem; color: var(--text-gold); line-height: 1; margin-bottom: 0.5rem; cursor: pointer;" onclick="speakChar('${char}')" title="點擊聽發音">${char}</div>
+                    ${createSpeakBtnHTML(char, '1.8rem', '聽聽「' + char + '」的發音', 0.6)}
+                </div>
+                <div style="font-size: 1.8rem; color: #94a3b8; font-weight: bold; margin-bottom: 0.5rem;">[ ${data.zhuyin} ]</div>
+                <div style="font-size: 1.1rem; color: #60a5fa; letter-spacing: 2px; margin-bottom: 1.5rem;">${getPinyin(char)}</div>
+                <div style="font-size: 1.2rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; color: white;">
+                    <strong style="color: var(--text-gold);">意思是：</strong><br>${data.definition}
+                    ${createSpeakBtnHTML(data.definition, '0.9rem', '朗讀解釋', 0.9)}
+                </div>
+                ${data.image ? `<div class="char-illustration-container"><img src="${data.image}" class="char-illustration"></div>` : 
+                `<div class="char-illustration-placeholder">繪本插圖陸續增加中...</div>`}
+            </div>
+            <div style="flex: 1.5;">
+                <div class="mnemonic-container" style="grid-template-columns: 1fr;">
+                    <div class="mnemonic-box box-logic" style="margin-bottom: 1rem;">
+                        <div class="box-label">💡 部件大奧祕 (字理) ${createSpeakBtnHTML(data.logic || '這是一個特別的合體字', '0.85rem', '朗讀字理', 0.85)}</div>
+                        <div class="box-content">${data.logic || "這是一個特別的合體字！"}</div>
+                    </div>
+                    <div class="mnemonic-box box-story">
+                        <div class="box-label">📖 識字小故事 ${createSpeakBtnHTML(data.story || '相傳在古老的文字森林中', '0.85rem', '朗讀故事', 0.85)}</div>
+                        <div class="box-content">${data.story || "相傳在古老的文字森林中..."}</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                    <div style="background: rgba(34, 197, 94, 0.1); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.2);">
+                        <h3 style="color: #4ade80; margin-bottom: 0.5rem; font-size: 1rem;">🍎 造詞小天地</h3>
+                        <div style="font-size: 1.1rem; line-height: 2;">${phraseButtons}</div>
+                    </div>
+                    <div style="background: rgba(59, 130, 246, 0.1); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <h3 style="color: #60a5fa; margin-bottom: 0.5rem; font-size: 1rem;">✍️ 造句練習場 ${createSpeakBtnHTML(data.sentence, '0.85rem', '朗讀例句', 0.9)}</h3>
+                        <p style="font-size: 1.1rem; line-height: 1.8;">${getRubyHTML(data.sentence)}</p>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 1.5rem; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn" onclick="masterCharacter('${char}')" style="margin: 0;">${isMastered ? '再挑戰測驗' : '接受挑戰 (+50 XP / 3 💎)'}</button>
+                    ${isMastered ? `<button class="btn btn-secondary" onclick="startDrawing('${char}')" style="margin: 0;">🎨 裝飾島嶼</button>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('char-modal').style.display = 'none'; }
+function masterCharacter(char) { 
+    // Always start quiz even if already mastered, to allow "Try Again"
+    startQuiz(char); 
+}
+
+// 4-Level Quiz System + Abilities
+let currentQuizStage = 1;
+
+function startQuiz(char) {
+    currentChar = char;
+    currentQuizStage = 1;
+    showQuizLevel();
+}
+
+function gainGems(amount) {
+    if (!currentUser.stats) currentUser.stats = {};
+    if (currentUser.stats.gems === undefined) {
+        currentUser.stats.gems = currentUser.stats.rpgItemsCount || 0;
+    }
+    currentUser.stats.gems += amount;
+    saveUser();
+    updateStats();
+}
+
+function getSimilarDistractors(char, count = 3) {
+    const data = libraryData.characters[char];
+    if (!data) return [];
+    // Prefer characters with the same radical (comp)
+    let sameComp = Object.keys(libraryData.characters).filter(c => c !== char && libraryData.characters[c].comp === data.comp);
+    if (sameComp.length < count) {
+        let others = Object.keys(libraryData.characters).filter(c => c !== char && !sameComp.includes(c));
+        sameComp = [...sameComp, ...others.sort(() => 0.5 - Math.random())];
+    }
+    return sameComp.sort(() => 0.5 - Math.random()).slice(0, count);
+}
+
+function showQuizLevel() {
+    closeModal();
+    const charData = libraryData.characters[currentChar];
+    const modal = document.getElementById('quiz-modal');
+    const optionsDiv = document.getElementById('quiz-options');
+    const feedback = document.getElementById('quiz-feedback');
+    const qTitle = document.getElementById('quiz-question-title');
+    
+    // Total stages: 1.Listening, 2.Meaning, 3.Application, 4.Association, 5.Puzzle
+    if (currentQuizStage === 6) {
+        finishQuiz();
+        return;
+    }
+    if (currentQuizStage === 5) {
+        modal.style.display = 'none';
+        startPuzzleGame(currentChar);
+        return;
+    }
+    
+    optionsDiv.innerHTML = '';
+    feedback.innerText = '';
+    modal.style.display = 'flex';
+
+    if (!currentUser.stats) currentUser.stats = {};
+    if (!currentUser.stats[currentChar]) currentUser.stats[currentChar] = { attempts: 0, mistakes: 0 };
+    currentUser.stats[currentChar].attempts++;
+    saveUser();
+
+    if (currentQuizStage === 1) {
+        qTitle.innerHTML = `【1. 聽音辨字】聽聽看發音，選出正確的字：<br><br>
+            <button class="btn" onclick="speakChar('${currentChar}')">🔊 播放發音</button>`;
+        speakChar(currentChar);
+        const correctChar = currentChar;
+        const options = [correctChar, ...getSimilarDistractors(correctChar)].sort(() => 0.5 - Math.random());
+        options.forEach(opt => {
+            const btn = document.createElement('div'); btn.className = 'quiz-option'; btn.style.fontSize = '3.5rem'; btn.style.textAlign = 'center';
+            btn.innerText = opt;
+            btn.onclick = () => handleQuizAnswer(opt === correctChar, btn, charData.logic);
+            optionsDiv.appendChild(btn);
+        });
+    } else if (currentQuizStage === 2) {
+        qTitle.innerText = `【2. 字義理解】「${currentChar}」的意思是？`;
+        const correctDef = charData.definition;
+        let allDefs = Object.values(libraryData.characters).map(c => c.definition).filter(d => d !== correctDef);
+        allDefs = [...new Set(allDefs)].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const options = [correctDef, ...allDefs].sort(() => 0.5 - Math.random());
+        options.forEach(opt => {
+            const btn = document.createElement('div'); btn.className = 'quiz-option'; btn.innerText = opt;
+            btn.onclick = () => handleQuizAnswer(opt === correctDef, btn, charData.logic);
+            optionsDiv.appendChild(btn);
+        });
+    } else if (currentQuizStage === 3) {
+        let sentence = charData.sentence || "這個__字非常好學。";
+        let maskedSentence = sentence.replace(new RegExp(currentChar, 'g'), "___");
+        qTitle.innerText = `【3. 情境應用】請選出適合填入空格的字：\n\n「 ${maskedSentence} 」`;
+        const correctChar = currentChar;
+        const options = [correctChar, ...getSimilarDistractors(correctChar)].sort(() => 0.5 - Math.random());
+        options.forEach(opt => {
+            const btn = document.createElement('div'); btn.className = 'quiz-option'; btn.innerText = opt;
+            btn.onclick = () => handleQuizAnswer(opt === correctChar, btn, charData.logic);
+            optionsDiv.appendChild(btn);
+        });
+    } else if (currentQuizStage === 4) {
+        let storyTxt = charData.story || charData.logic;
+        qTitle.innerText = `【4. 故事聯想】哪一個字的故事是：「${storyTxt}」`;
+        const correctChar = currentChar;
+        const options = [correctChar, ...getSimilarDistractors(correctChar)].sort(() => 0.5 - Math.random());
+        options.forEach(opt => {
+            const btn = document.createElement('div'); btn.className = 'quiz-option'; btn.innerText = opt;
+            btn.onclick = () => handleQuizAnswer(opt === correctChar, btn, charData.logic);
+            optionsDiv.appendChild(btn);
+        });
+    }
+}
+
+function handleQuizAnswer(isCorrect, btn, logicText) {
+    if (isCorrect) {
+        btn.classList.add('correct');
+        document.getElementById('quiz-feedback').innerText = '✨ 答對了！繼續前進！';
+        setTimeout(() => {
+            currentQuizStage++;
+            showQuizLevel();
+        }, 1000);
+    } else {
+        btn.classList.add('incorrect');
+        currentUser.stats[currentChar].mistakes++;
+        saveUser();
+        document.getElementById('quiz-feedback').innerText = `❌ 不太對喔，回想一下：${logicText}`;
+        setTimeout(() => {
+            currentQuizStage = 1;
+            showQuizLevel();
+        }, 2000);
+    }
+}
+
+function finishQuiz() {
+    const modal = document.getElementById('quiz-modal');
+    document.getElementById('quiz-question-title').innerText = '🎉 挑戰成功！';
+    const optionsDiv = document.getElementById('quiz-options');
+    optionsDiv.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">${currentChar}</div>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem; color: #4ade80;">你已經完美掌握了這個字！</p>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <button class="btn" onclick="startDrawing('${currentChar}')">🎨 幫這個字畫張畫 (裝飾小島)</button>
+                <button class="btn btn-secondary" onclick="closeQuizAndGoBack()">📚 繼續學習其他字</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('quiz-feedback').innerText = '';
+    
+    if (!currentUser.mastered.includes(currentChar)) { 
+        currentUser.mastered.push(currentChar); 
+        gainXP(50); 
+        gainGems(3); // Mastering a character gives 3 gems
+        checkBadgesAndAbilities();
+    }
+    modal.style.display = 'flex';
+}
+
+function closeQuizAndGoBack() {
+    document.getElementById('quiz-modal').style.display = 'none';
+    if (currentUser.mastered.length % 5 === 0 && currentUser.mastered.length > 0) {
+        alert('🌟 太棒了！你已經掌握了 5 個新字，勇者大陸出現了新的冒險入口！');
+        startRPGMode();
+    } else {
+        showLibrary(currentArea);
+    }
+}
+
+function checkBadgesAndAbilities() {
+    if (!currentUser.badges) currentUser.badges = [];
+    if (!currentUser.abilities) currentUser.abilities = [];
+    if (!currentUser.stats) currentUser.stats = {};
+    
+    let mCount = currentUser.mastered.length;
+    // 1. 字數徽章
+    if (mCount >= 10 && !currentUser.badges.includes('🥉 銅牌徽章')) currentUser.badges.push('🥉 銅牌徽章');
+    if (mCount >= 30 && !currentUser.badges.includes('🥈 銀牌徽章')) currentUser.badges.push('🥈 銀牌徽章');
+    if (mCount >= 50 && !currentUser.badges.includes('🥇 金牌徽章')) currentUser.badges.push('🥇 金牌徽章');
+    
+    // 2. 部件完成度
+    const compMastery = {};
+    libraryData.components.forEach(c => compMastery[c.id] = { total: 0, mastered: 0 });
+    Object.keys(libraryData.characters).forEach(char => {
+        let comp = libraryData.characters[char].comp;
+        if(comp) compMastery[comp].total++;
+    });
+    currentUser.mastered.forEach(char => {
+        let comp = libraryData.characters[char]?.comp;
+        if(comp) compMastery[comp].mastered++;
+    });
+
+    let completedCompsCount = 0;
+    let masteredCompsSet = new Set();
+    Object.keys(compMastery).forEach(compId => {
+        if(compMastery[compId].total > 0 && compMastery[compId].mastered === compMastery[compId].total) {
+            completedCompsCount++;
+            let compName = libraryData.components.find(c => c.id === compId).symbol;
+            let badgeName = `${compName}部達人`;
+            if(!currentUser.badges.includes(badgeName)) currentUser.badges.push(badgeName);
+            
+            // Unlock corresponding element ability if not already unlocked
+            // Require 80% accuracy in this component
+            let compAttempts = 0; let compMistakes = 0;
+            Object.keys(libraryData.characters).forEach(char => {
+                if(libraryData.characters[char].comp === compId && currentUser.stats[char]) {
+                    compAttempts += currentUser.stats[char].attempts;
+                    compMistakes += currentUser.stats[char].mistakes;
+                }
+            });
+            let accuracy = compAttempts > 0 ? ((compAttempts - compMistakes) / compAttempts) : 0;
+            if(accuracy >= 0.8) {
+                if (compId === 'water' && !currentUser.abilities.includes('水之能力')) currentUser.abilities.push('水之能力');
+                if (compId === 'wood' && !currentUser.abilities.includes('木之能力')) currentUser.abilities.push('木之能力');
+            }
+        }
+        if(compMastery[compId].mastered > 0) masteredCompsSet.add(compId);
+    });
+
+    if (completedCompsCount >= 3 && !currentUser.badges.includes('🌟 部件高手')) currentUser.badges.push('🌟 部件高手');
+    if (completedCompsCount >= 5 && !currentUser.badges.includes('👑 識字王')) currentUser.badges.push('👑 識字王');
+
+    // 3. 正確率徽章
+    let totalAttempts = 0; let totalMistakes = 0;
+    if(currentUser.stats) {
+        Object.keys(currentUser.stats).forEach(c => {
+            if(typeof currentUser.stats[c] !== 'object' || !currentUser.stats[c]) return;
+            totalAttempts += (currentUser.stats[c].attempts || 0);
+            totalMistakes += (currentUser.stats[c].mistakes || 0);
+        });
+    }
+    let globalAccuracy = totalAttempts > 0 ? ((totalAttempts - totalMistakes) / totalAttempts) : 1;
+    if(mCount >= 10 && globalAccuracy >= 0.9 && !currentUser.badges.includes('🎯 精準小達人')) currentUser.badges.push('🎯 精準小達人');
+
+    // 4. 努力徽章
+    let hasRecovered = false;
+    currentUser.mastered.forEach(char => {
+        if(currentUser.stats[char] && currentUser.stats[char].mistakes > 0) hasRecovered = true;
+    });
+    if(hasRecovered && !currentUser.badges.includes('💪 不放棄徽章')) currentUser.badges.push('💪 不放棄徽章');
+
+    // 5. 新增：藝術創作徽章
+    let drawingCount = Object.keys(currentUser.drawings || {}).length;
+    if(drawingCount >= 5 && !currentUser.badges.includes('🎨 初級畫師')) currentUser.badges.push('🎨 初級畫師');
+    if(drawingCount >= 20 && !currentUser.badges.includes('🖌️ 傳說繪本家')) currentUser.badges.push('🖌️ 傳說繪本家');
+
+    // 6. 新增：多元探險徽章
+    if(masteredCompsSet.size >= 8 && !currentUser.badges.includes('🌈 多元探險家')) currentUser.badges.push('🌈 多元探險家');
+    if(masteredCompsSet.size >= 15 && !currentUser.badges.includes('🗺️ 全域開拓者')) currentUser.badges.push('🗺️ 全域開拓者');
+
+    // 7. 新增：地下城徽章
+    if((currentUser.stats.rpgWins || 0) >= 1 && !currentUser.badges.includes('🏰 地下城勇者')) currentUser.badges.push('🏰 地下城勇者');
+    if((currentUser.stats.rpgItemsCount || 0) >= 20 && !currentUser.badges.includes('💎 寶藏獵人')) currentUser.badges.push('💎 寶藏獵人');
+
+    // 8. 新增：等級里程碑
+    if(currentUser.level >= 10 && !currentUser.badges.includes('🚀 突飛猛進')) currentUser.badges.push('🚀 突飛猛進');
+
+    saveUser();
+}
+
+
+const RPG_MAP_TEMPLATES = [
+    [ // 10x10 Map (1 = wall, 0 = floor)
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,0,1,0,0,0,0,1],
+        [1,0,0,0,0,0,1,0,0,1],
+        [1,0,1,1,1,1,1,0,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,1,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,1,1,1,1,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+    ]
+];
+
+let rpgMap = [];
+let rpgPlayer = { x: 1, y: 1 };
+let rpgChest = { x: 8, y: 8 };
+let rpgItems = {};
+let rpgHistoryPos = { x: 1, y: 1 };
+const ADVENTURE_EMOJIS = ['💎', '💊', '🗡️', '🏺', '📜', '🛡️', '🧪'];
+
+function startRPGMode() {
+    showScreen('rpg-screen');
+    initRPGGame();
+}
+
+function initRPGGame() {
+    const mapTemplate = RPG_MAP_TEMPLATES[0];
+    rpgMap = JSON.parse(JSON.stringify(mapTemplate)); // clone
+    rpgPlayer = { x: 1, y: 1 };
+    rpgHistoryPos = { x: 1, y: 1 };
+    rpgItems = {};
+    rpgChest = { x: 8, y: 8 };
+
+    const paths = [];
+    for(let y=1; y<9; y++) {
+        for(let x=1; x<9; x++) {
+            if(rpgMap[y][x] === 0 && !(x===1 && y===1) && !(x===8 && y===8)) {
+                paths.push({x, y});
+            }
+        }
+    }
+    paths.sort(() => 0.5 - Math.random());
+    
+    // Pick the latest 5 characters for items
+    let charsToPlace = currentUser.mastered.slice(-5);
+    if(charsToPlace.length === 0) charsToPlace = ['好', '水', '人', '口', '手']; // fallback
+    
+    charsToPlace.forEach((char, index) => {
+        if(index < paths.length) {
+            const p = paths[index];
+            const emoji = ADVENTURE_EMOJIS[index % ADVENTURE_EMOJIS.length];
+            rpgItems[`${p.x},${p.y}`] = { char, emoji };
+        }
+    });
+
+    document.addEventListener('keydown', handleRPGKey);
+    renderRPG();
+}
+
+function exitRPGMode() {
+    document.removeEventListener('keydown', handleRPGKey);
+    showDashboard();
+}
+
+function handleRPGKey(e) {
+    if(document.getElementById('rpg-screen').classList.contains('active')) {
+        if(document.getElementById('quiz-modal').style.display === 'flex' || document.getElementById('word-quiz-modal').style.display === 'flex') return;
+        if(e.key === 'ArrowUp') movePlayer(0, -1);
+        else if(e.key === 'ArrowDown') movePlayer(0, 1);
+        else if(e.key === 'ArrowLeft') movePlayer(-1, 0);
+        else if(e.key === 'ArrowRight') movePlayer(1, 0);
+    }
+}
+
+function renderRPG() {
+    const grid = document.getElementById('rpg-grid');
+    grid.innerHTML = '';
+    for(let y=0; y<10; y++) {
+        for(let x=0; x<10; x++) {
+            const cell = document.createElement('div');
+            let baseClass = 'floor';
+            if(rpgMap[y][x] === 1) baseClass = 'wall';
+            if(rpgMap[y][x] === 2) baseClass = 'water';
+            cell.className = 'rpg-cell ' + baseClass;
+            
+            if(rpgMap[y][x] === 1) cell.innerText = '';
+            else if(x === rpgPlayer.x && y === rpgPlayer.y) {
+                cell.classList.add('player');
+                cell.innerText = (baseClass === 'water') ? '🏊' : '👸';
+            } else if(x === rpgChest.x && y === rpgChest.y) {
+                cell.classList.add('chest');
+                cell.innerText = '🎁';
+            } else if(rpgItems[`${x},${y}`]) {
+                cell.classList.add('item');
+                cell.innerText = rpgItems[`${x},${y}`].emoji;
+            }
+            grid.appendChild(cell);
+        }
+    }
+}
+
+function movePlayer(dx, dy) {
+    const nx = rpgPlayer.x + dx;
+    const ny = rpgPlayer.y + dy;
+    
+    if(nx<0||nx>=10||ny<0||ny>=10) return;
+    
+    // 1 is wall (Tree/Mountain)
+    if(rpgMap[ny][nx] === 1) return;
+    
+    // 2 is water (River) - no ability check needed, player can cross freely
+    
+    rpgHistoryPos = { x: rpgPlayer.x, y: rpgPlayer.y };
+    rpgPlayer.x = nx;
+    rpgPlayer.y = ny;
+    
+    const key = `${nx},${ny}`;
+    if(rpgItems[key]) {
+        renderRPG();
+        setTimeout(() => triggerRPGBattle(key), 100);
+    } else if(nx === rpgChest.x && ny === rpgChest.y) {
+        renderRPG();
+        setTimeout(() => winRPGMode(), 100);
+    } else {
+        renderRPG();
+    }
+}
+
+function triggerRPGBattle(monsterKey) {
+    const itemData = rpgItems[monsterKey];
+    if(!itemData) return;
+    const char = itemData.char;
+    const data = libraryData.characters[char];
+    if(!data) { delete rpgItems[monsterKey]; renderRPG(); return; } 
+    
+    const modal = document.getElementById('quiz-modal');
+    const optionsDiv = document.getElementById('quiz-options');
+    optionsDiv.innerHTML = '';
+    
+    // The question is now about Zhuyin -> Character
+    document.getElementById('quiz-question-title').innerHTML = `⚔️ 勇者，請證明你的實力！<br>請問注音「<span style="font-size:3.5rem; color:#000;">${data.zhuyin}</span>」是對應哪個國字呢？`;
+    document.getElementById('quiz-feedback').innerText = '';
+    
+    // Get fake characters from the library
+    let allFakes = Object.keys(libraryData.characters).filter(cKey => cKey !== char);
+    allFakes = allFakes.sort(() => 0.5 - Math.random()).slice(0, 3);
+    
+    const options = [char, ...allFakes].sort(() => 0.5 - Math.random());
+    
+    options.forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'quiz-option'; 
+        btn.style.fontSize = '2.5rem'; // Larger font for single character options
+        btn.style.padding = '15px';
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (opt === char) {
+                btn.classList.add('correct');
+                document.getElementById('quiz-feedback').innerText = '✨ 答對了！順利收集到物品，經驗值增加了！';
+                delete rpgItems[monsterKey];
+                
+                // Increment RPG items count for badge
+                if(!currentUser.stats) currentUser.stats = {};
+                currentUser.stats.rpgItemsCount = (currentUser.stats.rpgItemsCount || 0) + 1;
+                checkBadgesAndAbilities(); // Check for new badges
+                
+                gainXP(20); 
+                gainGems(5); // RPG monster battle gives 5 gems now!
+                setTimeout(() => { 
+                    modal.style.display = 'none'; 
+                    renderRPG();
+                }, 1500);
+            } else {
+                btn.classList.add('incorrect');
+                const optData = libraryData.characters[opt];
+                document.getElementById('quiz-feedback').innerText = `💥 答錯了！那個字念「${optData ? optData.zhuyin : '?'}」，退後一格！`;
+                setTimeout(() => { 
+                    modal.style.display = 'none';
+                    rpgPlayer.x = rpgHistoryPos.x;
+                    rpgPlayer.y = rpgHistoryPos.y;
+                    renderRPG();
+                }, 1500);
+            }
+        };
+        optionsDiv.appendChild(btn);
+    });
+    
+    modal.style.display = 'flex';
+}
+
+function winRPGMode() {
+    alert("🎉 恭喜你找到寶箱！！獲得 150 經驗值！");
+    
+    // Increment RPG wins for badge
+    if(!currentUser.stats) currentUser.stats = {};
+    currentUser.stats.rpgWins = (currentUser.stats.rpgWins || 0) + 1;
+    checkBadgesAndAbilities(); // Check for new badges
+    
+    gainXP(150);
+    exitRPGMode();
+}
+
+// Teacher System Functions
+function showTeacherSection(sec) {
+    document.getElementById('teacher-stats-section').style.display = sec === 'stats' ? 'block' : 'none';
+    document.getElementById('teacher-library-section').style.display = sec === 'library' ? 'block' : 'none';
+    if (sec === 'library') renderLibraryManager();
+}
+
+function renderTeacherDashboard() {
+    const tbody = document.getElementById('student-table-body'); if (!tbody) return; tbody.innerHTML = '';
+    const names = JSON.parse(localStorage.getItem(USERLIST_KEY) || '[]');
+    let totalLibChars = Object.keys(libraryData.characters).length;
+
+    names.forEach(name => {
+        const s = JSON.parse(localStorage.getItem(STORAGE_PREFIX + name));
+        if (s) {
+            let totalAttempts = 0; let totalMistakes = 0;
+            let weakChar = '無'; let maxMistakes = 0;
+            if(s.stats) {
+                Object.keys(s.stats).forEach(c => {
+                    if(!s.stats[c]) return;
+                    totalAttempts += (s.stats[c].attempts || 0);
+                    totalMistakes += (s.stats[c].mistakes || 0);
+                    if((s.stats[c].mistakes || 0) > maxMistakes) { maxMistakes = s.stats[c].mistakes; weakChar = c; }
+                });
+            }
+            let accuracy = totalAttempts > 0 ? Math.round(((totalAttempts - totalMistakes) / totalAttempts) * 100) : 100;
+            if (accuracy < 0) accuracy = 0;
+            let progressPct = Math.round((s.mastered.length / totalLibChars) * 100);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td style="padding: 1rem;">${s.name} (${s.grade})</td>
+                <td>Lvl ${s.level}</td>
+                <td>${accuracy}%</td>
+                <td>
+                    <div style="font-size: 0.8rem; text-align: right;">${s.mastered.length} / ${totalLibChars}</div>
+                    <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progressPct}%;"></div></div>
+                </td>
+                <td><span class="weak-char">${maxMistakes > 2 ? weakChar : '優秀'}</span></td>
+                <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="previewStudentMap('${s.name}')">👀 查看</button></td>`;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+function previewStudentMap(studentName) {
+    const saved = localStorage.getItem(STORAGE_PREFIX + studentName);
+    if (!saved) return;
+    const studentUser = JSON.parse(saved);
+    
+    // Save teacher session temporarily
+    sessionStorage.setItem('teacherReturnState', 'true');
+    
+    // Set current user to the student
+    currentUser = studentUser;
+    selectedGrade = currentUser.grade;
+    
+    // Update navbar for preview mode
+    document.getElementById('userName').innerHTML = `<span style="color: #f87171;">(觀察中)</span> ${currentUser.name}`;
+    const navBar = document.getElementById('navbar');
+    const exitBtn = document.createElement('button');
+    exitBtn.id = 'exit-preview-btn';
+    exitBtn.className = 'btn';
+    exitBtn.style.cssText = 'padding: 5px 15px; font-size: 0.8rem; background: #ef4444;';
+    exitBtn.innerText = '返回導師中控室';
+    exitBtn.onclick = exitStudentPreview;
+    
+    // Remove logout and intro manual conditionally or simply prepend exitBtn
+    navBar.querySelector('.user-stats').prepend(exitBtn);
+    
+    showScreen('map-screen'); 
+    renderMap();
+}
+
+function exitStudentPreview() {
+    sessionStorage.removeItem('teacherReturnState');
+    const exitBtn = document.getElementById('exit-preview-btn');
+    if (exitBtn) exitBtn.remove();
+    
+    // Restore teacher
+    currentUser = { name: '導師', role: 'teacher', id: 'teacher' };
+    document.getElementById('userName').innerText = '導師';
+    showDashboard();
+}
+
+function renderLibraryManager() {
+    const list = document.getElementById('library-manager-list');
+    const search = document.getElementById('libSearchInput').value.trim().toLowerCase();
+    list.innerHTML = '';
+
+    // Group characters by component
+    const grouped = {};
+    Object.keys(libraryData.characters).forEach(char => {
+        const data = libraryData.characters[char];
+        if (search && !char.includes(search) &&
+            !(data.definition || '').toLowerCase().includes(search) &&
+            !(data.zhuyin || '').includes(search)) return;
+        const compId = data.comp || 'other';
+        if (!grouped[compId]) grouped[compId] = [];
+        grouped[compId].push(char);
+    });
+
+    // Render grouped
+    const compOrder = libraryData.components.map(c => c.id);
+    compOrder.push('other');
+    compOrder.forEach(compId => {
+        const chars = grouped[compId];
+        if (!chars || chars.length === 0) return;
+        const comp = libraryData.components.find(c => c.id === compId);
+        const groupLabel = comp ? `${comp.symbol} ${comp.name}部` : '其他';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'grid-column: 1/-1; padding: 10px 5px 5px; border-bottom: 2px solid var(--text-gold); color: var(--text-gold); font-size: 1.2rem; font-weight: bold; margin-top: 15px;';
+        header.innerText = groupLabel + ` (${chars.length} 字)`;
+        list.appendChild(header);
+
+        chars.forEach(char => {
+            const data = libraryData.characters[char];
+            const div = document.createElement('div');
+            div.className = 'lib-manage-card';
+            div.style.cssText = 'display: flex; flex-direction: column; gap: 4px; padding: 10px;';
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 1.8rem; font-weight: bold;">${char}</span>
+                    <span style="font-size: 0.85rem; color: #94a3b8;">${data.zhuyin || ''}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">${data.definition || '（無解釋）'}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">${data.sentence ? data.sentence.substring(0, 20) + '…' : ''}</div>
+                <button class="btn-sm" onclick="openEditModal('${char}')" style="margin-top: 4px; width: 100%;">✏️ 編輯</button>
+            `;
+            list.appendChild(div);
+        });
+    });
+
+    if (list.children.length === 0) {
+        list.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; padding:2rem;">找不到符合的生字</div>';
+    }
+}
+
+function openEditModal(char) {
+    const modal = document.getElementById('edit-modal');
+    const form = document.getElementById('edit-char-form');
+    const title = document.getElementById('edit-modal-title');
+    const delBtn = document.getElementById('delete-char-btn');
+    
+    form.reset();
+    if (char) {
+        title.innerText = `編輯生字：${char}`;
+        const d = libraryData.characters[char];
+        form.char.value = char;
+        form.char.readOnly = true;
+        form.zhuyin.value = d.zhuyin;
+        form.comp.value = d.comp;
+        form.grade.value = d.grade;
+        form.definition.value = d.definition;
+        form.logic.value = d.logic || '';
+        form.story.value = d.story || '';
+        form.breakdown.value = (d.breakdown || []).join(',');
+        form.phrases.value = (Array.isArray(d.phrases) ? d.phrases : [d.phrases]).join(',');
+        form.sentence.value = d.sentence;
+        form.image.value = d.image || '';
+        document.getElementById('edit-image-upload').value = '';
+        if (d.image) {
+            document.getElementById('edit-image-preview').src = d.image;
+            document.getElementById('edit-image-preview-container').style.display = 'block';
+        } else {
+            document.getElementById('edit-image-preview-container').style.display = 'none';
+        }
+        delBtn.style.display = 'inline-block';
+        delBtn.onclick = () => deleteCharacter(char);
+    } else {
+        title.innerText = '新增生字';
+        form.char.readOnly = false;
+        delBtn.style.display = 'none';
+        document.getElementById('edit-image-upload').value = '';
+        document.getElementById('edit-image-preview-container').style.display = 'none';
+    }
+    modal.style.display = 'flex';
+}
+
+function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+
+function saveCharacterEdit(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const char = fd.get('char');
+    const newCharData = {
+        grade: fd.get('grade'),
+        zhuyin: fd.get('zhuyin'),
+        comp: fd.get('comp'),
+        definition: fd.get('definition'),
+        phrases: fd.get('phrases').split(','),
+        sentence: fd.get('sentence'),
+        breakdown: fd.get('breakdown').split(','),
+        logic: fd.get('logic'),
+        story: fd.get('story'),
+        image: fd.get('image')
+    };
+
+    libraryData.characters[char] = newCharData;
+    
+    // Save to LocalStorage
+    saveLibraryToLocal();
+    closeEditModal();
+    renderLibraryManager();
+    alert('儲存成功！');
+}
+
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            document.getElementById('edit-image-input').value = evt.target.result;
+            document.getElementById('edit-image-preview').src = evt.target.result;
+            document.getElementById('edit-image-preview-container').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function updateImagePreview() {
+    const val = document.getElementById('edit-image-input').value;
+    if (val) {
+        document.getElementById('edit-image-preview').src = val;
+        document.getElementById('edit-image-preview-container').style.display = 'block';
+    } else {
+        document.getElementById('edit-image-preview-container').style.display = 'none';
+    }
+}
+
+function deleteCharacter(char) {
+    if (confirm(`確定要刪除「${char}」嗎？`)) {
+        delete libraryData.characters[char];
+        saveLibraryToLocal();
+        closeEditModal();
+        renderLibraryManager();
+    }
+}
+
+function saveLibraryToLocal() {
+    const customOnly = {};
+    // Optional: only save diffs, but for simplicity we save the modified library state
+    localStorage.setItem(CUSTOM_LIB_KEY, JSON.stringify(libraryData.characters));
+}
+
+function exportLibraryDataCode() {
+    try {
+        const jsonStr = JSON.stringify(libraryData.characters);
+        const uint8array = new TextEncoder().encode(jsonStr);
+        let binary = "";
+        uint8array.forEach(b => {
+            binary += String.fromCharCode(b);
+        });
+        const code = btoa(binary);
+        
+        const modal = document.getElementById('share-code-modal');
+        document.getElementById('share-code-output').value = code;
+        document.getElementById('share-code-title').innerText = '📤 題庫同步代碼';
+        modal.style.display = 'flex';
+    } catch(e) {
+        alert('匯出失敗：' + e.message);
+    }
+}
+
+function importLibraryDataCodePrompt() {
+    document.getElementById('library-import-input').value = '';
+    document.getElementById('library-import-modal').style.display = 'flex';
+}
+
+function processLibraryImport() {
+    let code = document.getElementById('library-import-input').value.trim();
+    if (!code) {
+        alert('請先貼入題庫代碼！');
+        return;
+    }
+
+    code = code.replace(/\s/g, '');
+
+    try {
+        let binary;
+        try {
+            binary = atob(code);
+        } catch(b64err) {
+            throw new Error('代碼格式錯誤 (Base64 解析失敗)，請確認代碼是否複製完整。');
+        }
+
+        let jsonStr;
+        try {
+            const uint8array = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                uint8array[i] = binary.charCodeAt(i);
+            }
+            jsonStr = new TextDecoder().decode(uint8array);
+        } catch(decodeErr) {
+            throw new Error('文字解碼失敗 (Unicode Decoding Error)。');
+        }
+
+        let chars;
+        try {
+            chars = JSON.parse(jsonStr);
+        } catch(jsonErr) {
+            throw new Error('代碼內容損毀 (JSON 解析失敗)。');
+        }
+
+        if (!chars || typeof chars !== 'object') {
+            throw new Error('無效的題庫格式。');
+        }
+        
+        const sampleKey = Object.keys(chars)[0];
+        if (sampleKey && (!chars[sampleKey].zhuyin && !chars[sampleKey].definition)) {
+             throw new Error('代碼內容似乎不是有效的題庫資料。');
+        }
+
+        libraryData.characters = { ...libraryData.characters, ...chars };
+        localStorage.setItem(CUSTOM_LIB_KEY, JSON.stringify(libraryData.characters));
+        
+        alert('✅ 題庫匯入成功！系統已更新。頁面將重新整理。');
+        location.reload();
+    } catch(e) {
+        console.error('Import Error:', e);
+        alert('❌ 匯入失敗：\n' + e.message);
+    }
+}
+
+function processLibraryFileImport() {
+    const fileInput = document.getElementById('library-file-input');
+    if (!fileInput.files.length) {
+        alert('請先選擇檔案！');
+        return;
+    }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        let content = e.target.result;
+        try {
+            // If it's the old .js format, try to extract the JSON
+            if (content.includes('const updatedCharacters =')) {
+                content = content.replace('const updatedCharacters =', '').replace(/;$/, '').trim();
+            }
+            const chars = JSON.parse(content);
+            applyImportedLibrary(chars);
+        } catch(err) {
+            alert('❌ 檔案格式錯誤，無法解析 JSON。');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function applyImportedLibrary(chars) {
+    if (!chars || typeof chars !== 'object') {
+        alert('❌ 無效的題庫格式。');
+        return;
+    }
+    libraryData.characters = { ...libraryData.characters, ...chars };
+    localStorage.setItem(CUSTOM_LIB_KEY, JSON.stringify(libraryData.characters));
+    alert('✅ 題庫匯入成功！系統已更新。頁面將重新整理。');
+    location.reload();
+}
+
+function exportLibraryData() {
+    // Export as pure JSON for easier importing
+    const jsonStr = JSON.stringify(libraryData.characters, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'zi_part_quest_library.json';
+    a.click();
+    alert('✅ 題庫檔案已下載。您可以在另一台裝置上使用「匯入檔案」功能來同步。');
+}
+
+// Island & Atmosphere Logic ... (unchanged)
+function showIsland(forceIslandId = null) { 
+    showScreen('island-screen'); 
+    if (forceIslandId) activeIslandId = forceIslandId;
+    else if (!activeIslandId) activeIslandId = 'all';
+    
+    renderIslandSidebar(); 
+    renderIsland(); 
+}
+
+function renderIslandSidebar() {
+    const nav = document.getElementById('island-navigator'); if (!nav) return; nav.innerHTML = '';
+    const allItem = document.createElement('div');
+    allItem.className = `nav-item ${activeIslandId === 'all' ? 'active' : ''}`;
+    allItem.innerHTML = `<span class="nav-symbol">🌍</span> 傳說大陸`;
+    allItem.onclick = () => { activeIslandId = 'all'; renderIslandSidebar(); renderIsland(); };
+    nav.appendChild(allItem);
+
+    libraryData.components.forEach(comp => {
+        const masteredInComp = currentUser.mastered.filter(char => libraryData.characters[char]?.comp === comp.id);
+        if (masteredInComp.length === 0) return;
+        const item = document.createElement('div');
+        item.className = `nav-item ${activeIslandId === comp.id ? 'active' : ''}`;
+        item.innerHTML = `<span class="nav-symbol">${comp.symbol}</span> ${comp.symbol}部小島`;
+        item.onclick = () => { activeIslandId = comp.id; renderIslandSidebar(); renderIsland(); };
+        nav.appendChild(item);
+    });
+}
+
+function renderIsland() {
+    const base = document.getElementById('island-base');
+    const screen = document.getElementById('island-screen');
+    const atmosphere = document.getElementById('island-atmosphere');
+    if (!base) return;
+    base.innerHTML = ''; atmosphere.innerHTML = '';
+    
+    screen.className = 'screen active'; 
+    base.className = 'island-base';
+
+    if (activeIslandId === 'all') {
+        screen.classList.add('theme-all-island');
+        document.getElementById('island-title').innerText = '黃金傳說大陸';
+    } else {
+        const comp = libraryData.components.find(c => c.id === activeIslandId);
+        document.getElementById('island-title').innerText = `${comp.symbol}部小島`;
+        base.classList.add(comp.id);
+        screen.classList.add(`theme-${comp.id}-island`);
+        applyAtmosphere(comp.id, atmosphere);
+    }
+
+    const charsToDisplay = Object.keys(currentUser.drawings).filter(char => 
+        activeIslandId === 'all' || libraryData.characters[char]?.comp === activeIslandId
+    );
+
+    // Grid-based placement to avoid overlap
+    const count = charsToDisplay.length;
+    const gridSize = Math.ceil(Math.sqrt(count || 1)) + 1;
+    const rows = Math.max(gridSize, 4);
+    const cols = Math.max(gridSize, 4);
+    
+    const cells = [];
+    for(let r=0; r<rows; r++) {
+        for(let c=0; c<cols; c++) {
+            cells.push({ r, c });
+        }
+    }
+    // Shuffle cells
+    cells.sort(() => 0.5 - Math.random());
+
+    charsToDisplay.forEach((char, index) => {
+        if (index >= cells.length) return;
+        const cell = cells[index];
+        const obj = document.createElement('div'); obj.className = 'island-object';
+        
+        // Distribution with jitter
+        const left = 15 + (cell.c * (70/cols)) + (Math.random() * 4 - 2);
+        const top = 15 + (cell.r * (60/rows)) + (Math.random() * 4 - 2);
+        
+        obj.style.left = `${left}%`; 
+        obj.style.top = `${top}%`;
+        obj.innerHTML = `<img src="${currentUser.drawings[char]}" class="stamped-img"><div class="stamped-char">${getRubyHTML(char)}</div>`;
+        obj.onclick = () => openCharModal(char);
+        base.appendChild(obj);
+    });
+}
+
+function applyAtmosphere(type, container) {
+    const addParticles = (count, emoji, size = '1.5rem', durRange = [4, 8]) => {
+        for(let i=0; i<count; i++) {
+            const p = document.createElement('div');
+            p.className = 'atmos-particle';
+            p.innerText = emoji;
+            p.style.fontSize = size;
+            p.style.left = `${Math.random() * 100}%`;
+            p.style.top = `${50 + Math.random() * 50}%`;
+            p.style.animationDelay = `${Math.random() * 5}s`;
+            p.style.animationDuration = `${durRange[0] + Math.random() * durRange[1]}s`;
+            container.appendChild(p);
+        }
+    };
+
+    if (type === 'water') addParticles(20, '💧', '1rem', [3, 6]);
+    else if (type === 'wood') addParticles(15, '🍃', '1.2rem');
+    else if (type === 'sun') {
+        const r = document.createElement('div'); r.className = 'sunray'; container.appendChild(r);
+        addParticles(10, '✨', '1.5rem', [2, 4]);
+    }
+    else if (type === 'person') addParticles(6, '🚶', '2rem', [6, 12]);
+    else if (type === 'knife') addParticles(8, '🗡️', '1.5rem', [3, 5]);
+    else if (type === 'power') addParticles(12, '💥', '1.2rem', [2, 4]);
+    else if (type === 'mouth') addParticles(10, '💬', '1.5rem', [4, 8]);
+    else if (type === 'foot') addParticles(10, '👣', '1.5rem', [5, 10]);
+    else if (type === 'heart') addParticles(15, '❤️', '1.2rem', [3, 6]);
+    else if (type === 'speech') addParticles(12, '✏️', '1.5rem', [4, 7]);
+    else if (type === 'grass') addParticles(20, '🌱', '1.8rem', [5, 9]);
+    else if (type === 'silk') addParticles(12, '〰️', '1.5rem', [4, 8]);
+    else if (type === 'insect') addParticles(12, '🦋', '1.5rem', [4, 8]);
+    else if (type === 'gate') addParticles(5, '⛩️', '2rem', [8, 15]);
+    else if (type === 'rain') addParticles(30, '☔', '1.2rem', [2, 5]);
+    else if (type === 'bird') addParticles(8, '🕊️', '1.5rem', [4, 8]);
+}
+
+// Drawing logic
+function initCanvas() {
+    const canvas = document.getElementById('drawing-canvas'); 
+    if (!canvas) return; 
+    ctx = canvas.getContext('2d');
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
+    canvas.addEventListener('mousemove', paint);
+    canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
+    canvas.addEventListener('mouseleave', () => { isDrawing = false; ctx.beginPath(); });
+    
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; paintTouch(e); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); paintTouch(e); }, { passive: false });
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); isDrawing = false; ctx.beginPath(); }, { passive: false });
+    
+    // Resize canvas for mobile
+    resizeCanvas();
+}
+
+function resizeCanvas() {
+    const canvas = document.getElementById('drawing-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    const maxW = Math.min(container.offsetWidth - 20, 600);
+    canvas.style.width = maxW + 'px';
+    canvas.style.height = Math.round(maxW * 2/3) + 'px';
+}
+
+function paintTouch(e) {
+    if (!isDrawing) return;
+    const canvas = document.getElementById('drawing-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    ctx.lineWidth = currentTool === 'eraser' ? 30 : 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+}
+function startDrawing(char) { 
+    currentChar = char; 
+    document.getElementById('drawing-char-display').innerText = char;
+    const tv = document.getElementById('drawing-trace-text');
+    if (tv) { tv.innerText = char; }
+    const logic = libraryData.characters[char]?.logic || '';
+    document.getElementById('drawing-desc').innerText = `💡 繪畫靈感：${logic}`;
+    closeModal(); 
+    const qModal = document.getElementById('quiz-modal');
+    if (qModal) qModal.style.display = 'none';
+    showScreen('drawing-screen'); 
+    clearCanvas(); 
+}
+function paint(e) { 
+    if (!isDrawing) return; 
+    const canvas = document.getElementById('drawing-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX; 
+    const y = (e.clientY - rect.top) * scaleY; 
+    ctx.lineWidth = currentTool === 'eraser' ? 30 : 5; 
+    ctx.lineCap = 'round'; 
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor; 
+    ctx.lineTo(x, y); 
+    ctx.stroke(); 
+    ctx.beginPath(); 
+    ctx.moveTo(x, y); 
+}
+function setTool(tool) { currentTool = tool; document.querySelectorAll('.tool-item').forEach(i => i.classList.remove('active')); document.getElementById(`tool-${tool}`).classList.add('active'); }
+function setColor(color) { currentColor = color; currentTool = 'brush'; setTool('brush'); }
+function clearCanvas() { ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 800, 600); }
+function saveDrawing() { 
+    currentUser.drawings[currentChar] = document.getElementById('drawing-canvas').toDataURL(); 
+    gainXP(30); 
+    saveUser(); 
+    
+    const compId = libraryData.characters[currentChar]?.comp || 'all';
+    showIsland(compId); 
+}
+function gainXP(amount) { currentUser.xp += amount; if (currentUser.xp >= currentUser.level * 100) { currentUser.xp -= currentUser.level * 100; currentUser.level++; } saveUser(); updateStats(); }
+
+// 裝備系統函式已移至檔案底部（完整版）
+
+
+function renderProfile() {
+    const container = document.getElementById('avatar-profile-container');
+    if (!container) return;
+
+    let badgesHtml = (currentUser.badges || []).map(b => `<div class="badge-item">${b}</div>`).join('');
+    if (!badgesHtml) badgesHtml = '<span style="color: #64748b;">尚未獲得徽章，繼續加油！</span>';
+
+    let abilitiesHtml = (currentUser.abilities || []).map(a => `<div class="ability-pill">${a}</div>`).join('');
+    if (!abilitiesHtml) abilitiesHtml = '<span style="color: #64748b;">學習部首以解鎖能力</span>';
+
+    // Hero info from new system (with fallback if not loaded yet)
+    const heroInfo = typeof getHeroInfo === 'function' ? getHeroInfo() : { emoji: '🤴', title: '勇者' };
+    const equipped = currentUser.equipped || {};
+
+    const getSlot = (type) => (EQUIPMENT_DATA.find(i => i.id === equipped[type])?.name.split(' ')[0] || '');
+    const head   = getSlot('head');
+    const weapon = getSlot('weapon');
+    const shield = getSlot('shield');
+    const cape   = getSlot('cape');
+    const boots  = getSlot('boots');
+    const ring   = getSlot('ring');
+
+    // Build equipped items row
+    const equippedItems = [head, weapon, shield, cape, boots, ring].filter(Boolean);
+    const equippedRow = equippedItems.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${equippedItems.map(e => `<span style="font-size:1.5rem;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:4px 8px;">${e}</span>`).join('')}</div>`
+        : '<span style="color:#475569;font-size:0.85rem;">尚未裝備任何物品</span>';
+
+    container.innerHTML = `
+        <div style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                <div class="avatar-sprite" style="background: rgba(30,41,59,1); position: relative; font-size: 4rem;">
+                    ${heroInfo.emoji}
+                    ${head   ? `<div style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:1.8rem;">${head}</div>` : ''}
+                    ${weapon ? `<div style="position:absolute;right:-22px;top:40%;font-size:1.6rem;">${weapon}</div>` : ''}
+                    ${shield ? `<div style="position:absolute;left:-22px;top:40%;font-size:1.6rem;">${shield}</div>` : ''}
+                    ${cape   ? `<div style="position:absolute;left:-10px;bottom:-10px;font-size:1.4rem;">${cape}</div>` : ''}
+                    ${boots  ? `<div style="position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:1.5rem;">${boots}</div>` : ''}
+                    ${ring   ? `<div style="position:absolute;right:-10px;bottom:-10px;font-size:1.3rem;">${ring}</div>` : ''}
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-gold);text-align:center;">✨ ${heroInfo.title}</div>
+                <button class="btn-sm" onclick="showEquipment()" style="font-size:0.75rem;padding:4px 10px;">⚔️ 管理裝備</button>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <h3 style="font-size: 1.8rem; color: var(--text-gold); margin-bottom: 5px;">${currentUser.name}</h3>
+                <p style="font-size: 1.1rem; margin-bottom: 8px;">Level ${currentUser.level} | 累積 XP: ${currentUser.xp} | 💎 ${(currentUser.stats?.gems || 0)} 寶石</p>
+                <div style="margin-bottom:10px;">
+                    <strong style="color:#94a3b8;font-size:0.8rem;">⚔️ 裝備中：</strong>
+                    ${equippedRow}
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #38bdf8;">解鎖能力：</strong><br>
+                    ${abilitiesHtml}
+                </div>
+                <div>
+                    <strong style="color: #fbbf24;">冒險徽章：</strong><br>
+                    <div class="avatar-badges">${badgesHtml}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+function showCardBook() {
+    showScreen('cards-screen');
+    const container = document.getElementById('card-book-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!currentUser.mastered || currentUser.mastered.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; font-size: 1.2rem; padding: 3rem;">尚未收集到任何字卡。快去小島探險吧！</div>';
+        return;
+    }
+    
+    [...currentUser.mastered].reverse().forEach(char => {
+        const data = libraryData.characters[char];
+        if (!data) return;
+        
+        let isHard = (data.grade === '2A' || data.grade === '2B');
+        let cardClass = isHard ? 'card-hard' : 'card-normal';
+        let rarityStar = isHard ? '🌟 困難卡' : '⭐ 普通卡';
+        
+        const div = document.createElement('div');
+        div.className = `char-card-item ${cardClass}`;
+        div.innerHTML = `
+            <div class="card-rarity">${rarityStar}</div>
+            <div class="card-char-big" style="cursor: pointer;" onclick="event.stopPropagation(); speakChar('${char}');">${char}</div>
+            <div class="card-zhuyin">${data.zhuyin} ${createSpeakBtnHTML(char, '1rem', '聽聽看', 0.6)}</div>
+            <div style="font-size: 0.85rem; color: #60a5fa; letter-spacing: 1px; margin-bottom: 6px;">${getPinyin(char)}</div>
+            <div style="font-size: 0.9rem; margin-bottom: 10px; color: #cbd5e1;">${data.definition}</div>
+            <div style="font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; color: #94a3b8;">${Array.isArray(data.phrases) ? data.phrases[0] : data.phrases}</div>
+        `;
+        div.onclick = () => openCharModal(char); // clicking card opens details
+        container.appendChild(div);
+    });
+}
+
+// =======================
+// Puzzle Minigame Logic
+// =======================
+let currentPuzzleChar = null;
+let currentPuzzleParts = [];
+let puzzleDropZoneParts = [];
+
+function startPuzzleGame(char) {
+    currentPuzzleChar = char;
+    const data = libraryData.characters[char];
+    if(!data || !data.breakdown || data.breakdown.length === 0) {
+        // Fallback if no breakdown
+        finishQuiz();
+        return;
+    }
+
+    showScreen('puzzle-screen');
+    document.getElementById('puzzle-feedback').innerText = '';
+    
+    // Auto-generate hint
+    document.getElementById('puzzle-hint').innerText = `💡 提示：${data.logic || '這個字是由多個特別的部件組成的唷！'}`;
+
+    // Get correct parts
+    let correctParts = data.breakdown.slice();
+    
+    // Get 2 random fake parts
+    const fakes = ['日', '口', '月', '木', '氵', '土', '心', '女'].filter(f => !correctParts.includes(f));
+    fakes.sort(() => 0.5 - Math.random());
+    const fakeParts = fakes.slice(0, 2);
+
+    currentPuzzleParts = [...correctParts, ...fakeParts].sort(() => 0.5 - Math.random());
+    puzzleDropZoneParts = [];
+    
+    renderPuzzleUI();
+}
+
+function renderPuzzleUI() {
+    const partsContainer = document.getElementById('puzzle-parts');
+    const dropZone = document.getElementById('puzzle-drop-zone');
+    
+    partsContainer.innerHTML = '';
+    dropZone.innerHTML = '';
+
+    // Render source parts
+    currentPuzzleParts.forEach((part, i) => {
+        const p = document.createElement('div');
+        p.className = 'puzzle-piece';
+        p.innerText = part;
+        if(puzzleDropZoneParts.includes(i)) {
+            p.classList.add('placed');
+        } else {
+            p.onclick = () => {
+                puzzleDropZoneParts.push(i);
+                renderPuzzleUI();
+            };
+        }
+        partsContainer.appendChild(p);
+    });
+
+    // Render drop zone
+    const charData = libraryData.characters[currentPuzzleChar];
+    const breakdownLen = charData.breakdown.length;
+    const structure = charData.structure || 'left-right';
+    
+    dropZone.className = ''; 
+    dropZone.classList.add('layout-' + structure);
+    // Extra styles for the zone itself
+    dropZone.style.border = '3px dashed var(--text-gold)';
+    dropZone.style.borderRadius = '15px';
+    dropZone.style.padding = '20px';
+    dropZone.style.background = 'rgba(0,0,0,0.5)';
+    dropZone.style.minWidth = '200px';
+    dropZone.style.minHeight = '120px';
+    dropZone.style.display = 'flex';
+    dropZone.style.justifyContent = 'center';
+    dropZone.style.alignItems = 'center';
+    dropZone.style.gap = '10px';
+
+    for(let k=0; k<breakdownLen; k++) {
+        const slot = document.createElement('div');
+        slot.className = 'puzzle-slot';
+        if(k < puzzleDropZoneParts.length) {
+            slot.innerText = currentPuzzleParts[puzzleDropZoneParts[k]];
+            slot.style.borderStyle = 'solid';
+            // Allow clicking to remove
+            slot.onclick = () => {
+                puzzleDropZoneParts.splice(k, 1);
+                renderPuzzleUI();
+            };
+        }
+        dropZone.appendChild(slot);
+    }
+}
+
+function resetPuzzle() {
+    puzzleDropZoneParts = [];
+    document.getElementById('puzzle-feedback').innerText = '';
+    renderPuzzleUI();
+}
+
+function checkPuzzle() {
+    const data = libraryData.characters[currentPuzzleChar];
+    const fb = document.getElementById('puzzle-feedback');
+    if(puzzleDropZoneParts.length !== data.breakdown.length) {
+        fb.innerText = '⚠️ 還有空白的格子喔！';
+        fb.style.color = '#ef4444';
+        return;
+    }
+
+    let isCorrect = true;
+    for(let i=0; i<data.breakdown.length; i++) {
+        if(currentPuzzleParts[puzzleDropZoneParts[i]] !== data.breakdown[i]) {
+            isCorrect = false;
+        }
+    }
+
+    if(isCorrect) {
+        fb.innerText = '🎉 拼對了！太厲害了！';
+        fb.style.color = '#4ade80';
+        setTimeout(() => {
+            finishQuiz();
+        }, 1500);
+    } else {
+        fb.innerText = '❌ 好像順序或部件不太對，再試一次吧！';
+        fb.style.color = '#ef4444';
+        currentUser.stats[currentPuzzleChar].mistakes++;
+        saveUser();
+        setTimeout(() => {
+            resetPuzzle();
+        }, 1500);
+    }
+}
+
+// =======================
+// Falling Catch Minigame
+// =======================
+let fallingGameInterval;
+let fallingItems = [];
+let fallingScore = 0;
+let fallingTime = 30;
+let fallingTargetCompId = null;
+
+function startFallingGame() {
+    // Determine the target radical based on active island or default to water
+    fallingTargetCompId = activeIslandId !== 'all' ? activeIslandId : 'water';
+    const compData = libraryData.components.find(c => c.id === fallingTargetCompId);
+    
+    document.getElementById('falling-game-title').innerText = `🌧️ 捕捉【${compData.symbol}部】的大挑戰！`;
+    document.getElementById('btn-start-falling').style.display = 'none';
+    document.getElementById('falling-game-over').style.display = 'none';
+    
+    fallingScore = 0;
+    fallingTime = 30;
+    fallingItems = [];
+    
+    document.getElementById('falling-score').innerText = fallingScore;
+    document.getElementById('falling-timer').innerText = fallingTime;
+    
+    const canvas = document.getElementById('falling-canvas');
+    canvas.onclick = handleFallingClick;
+    
+    if(fallingGameInterval) clearInterval(fallingGameInterval);
+    fallingGameInterval = setInterval(updateFallingGame, 50); // 20 fps
+    
+    // Timer
+    const timerInt = setInterval(() => {
+        fallingTime--;
+        document.getElementById('falling-timer').innerText = fallingTime;
+        if(fallingTime <= 0) {
+            clearInterval(timerInt);
+            endFallingGame();
+        }
+    }, 1000);
+}
+
+function updateFallingGame() {
+    const canvas = document.getElementById('falling-canvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    
+    // Spawn new word
+    if(Math.random() < 0.05) {
+        // Pick a random char
+        const allChars = Object.keys(libraryData.characters);
+        const randChar = allChars[Math.floor(Math.random() * allChars.length)];
+        fallingItems.push({
+            char: randChar,
+            x: 50 + Math.random() * (canvas.width - 100),
+            y: -50,
+            speed: 2 + Math.random() * 3,
+            comp: libraryData.characters[randChar].comp
+        });
+    }
+
+    // Draw and update items
+    for(let i=fallingItems.length-1; i>=0; i--) {
+        let item = fallingItems[i];
+        item.y += item.speed;
+        
+        ctx.font = '40px monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.char, item.x, item.y);
+        
+        if(item.y > canvas.height + 50) {
+            fallingItems.splice(i, 1);
+        }
+    }
+}
+
+function handleFallingClick(e) {
+    const canvas = document.getElementById('falling-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    
+    for(let i=fallingItems.length-1; i>=0; i--) {
+        let item = fallingItems[i];
+        let dist = Math.sqrt(Math.pow(cx - item.x, 2) + Math.pow(cy - item.y, 2));
+        if(dist < 30) {
+            // Hit!
+            if(item.comp === fallingTargetCompId) {
+                fallingScore += 10;
+                // Simple visual feedback could go here
+            } else {
+                fallingScore -= 5;
+            }
+            document.getElementById('falling-score').innerText = fallingScore;
+            fallingItems.splice(i, 1);
+            break;
+        }
+    }
+}
+
+function endFallingGame() {
+    clearInterval(fallingGameInterval);
+    document.getElementById('falling-game-over').style.display = 'block';
+    document.getElementById('falling-final-score').innerText = fallingScore;
+    document.getElementById('btn-start-falling').style.display = 'inline-block';
+    document.getElementById('btn-start-falling').innerText = '再玩一次';
+    
+    if(fallingScore > 0) {
+        gainGems(Math.floor(fallingScore / 5)); 
+        gainXP(fallingScore); // Reward user
+        saveUser();
+    }
+}
+
+// =======================
+// Adventure Word Quiz (New in 2.1)
+// =======================
+let currentWordQuizChar = null;
+let currentWordQuizKey = null;
+let currentWordCorrectAns = null;
+
+function triggerWordQuiz(char, key) {
+    currentWordQuizChar = char;
+    currentWordQuizKey = key;
+    const data = libraryData.characters[char];
+    
+    // Generate a word formation question
+    const vocab = data.vocab || data.phrases || ["字卡"];
+    const targetWord = vocab[Math.floor(Math.random() * vocab.length)];
+    const charIndex = targetWord.indexOf(char);
+    
+    if(charIndex === -1 || targetWord.length < 2) {
+        gainXP(30);
+        delete rpgItems[key];
+        renderRPG();
+        return;
+    }
+    
+    const targetPart = charIndex === 0 ? targetWord[1] : targetWord[0];
+    currentWordCorrectAns = targetPart;
+
+    document.getElementById('word-quiz-modal').style.display = 'flex';
+    document.getElementById('word-quiz-main-char').innerText = char;
+    document.getElementById('word-quiz-feedback').innerText = '';
+    
+    const slots = document.getElementById('word-quiz-slots');
+    slots.innerHTML = '';
+    if(charIndex === 0) {
+        slots.innerHTML = `<div class="puzzle-slot" style="border-style: solid; color: white;">${char}</div><div class="puzzle-slot" id="word-target-slot" style="color: var(--text-gold);">?</div>`;
+    } else {
+        slots.innerHTML = `<div class="puzzle-slot" id="word-target-slot" style="color: var(--text-gold);">?</div><div class="puzzle-slot" style="border-style: solid; color: white;">${char}</div>`;
+    }
+
+    const options = [targetPart];
+    const fakes = ['人', '口', '水', '木', '火', '土', '金', '日', '月', '大', '小'].filter(f => f !== targetPart);
+    fakes.sort(() => 0.5 - Math.random());
+    options.push(fakes[0], fakes[1]);
+    options.sort(() => 0.5 - Math.random());
+
+    const optGrid = document.getElementById('word-quiz-options');
+    optGrid.innerHTML = '';
+    options.forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'word-opt-card';
+        btn.innerText = opt;
+        btn.onclick = () => checkWordQuiz(opt, btn);
+        optGrid.appendChild(btn);
+    });
+}
+
+function checkWordQuiz(opt, btn) {
+    const fb = document.getElementById('word-quiz-feedback');
+    if(opt === currentWordCorrectAns) {
+        btn.classList.add('correct');
+        fb.innerText = '✨ 太棒了！組合成功！';
+        fb.style.color = '#4ade80';
+        gainXP(40);
+        gainGems(5);
+        delete rpgItems[currentWordQuizKey];
+        setTimeout(() => {
+            document.getElementById('word-quiz-modal').style.display = 'none';
+            renderRPG();
+        }, 1200);
+    } else {
+        btn.classList.add('wrong');
+        fb.innerText = '❌ 好像組不起來喔，再試試看！';
+        fb.style.color = '#ef4444';
+        // Bounce back
+        rpgPlayer.x = rpgHistoryPos.x;
+        rpgPlayer.y = rpgHistoryPos.y;
+        setTimeout(() => {
+            document.getElementById('word-quiz-modal').style.display = 'none';
+            renderRPG();
+        }, 1200);
+    }
+}
+
+// =======================
+// 勇者裝備系統
+// =======================
+const EQUIPMENT_DATA = [
+    // --- HEAD ---
+    { id: 'cap_1',     name: '🎓 學者帽',    desc: '好學不倦的冒險者專屬帽，知識就是力量！',   cost: 40,  type: 'head',   unlock: 0  },
+    { id: 'hat_1',     name: '🪄 魔法高帽',  desc: '神秘的魔法師高帽，讓你思路更清晰。',       cost: 80,  type: 'head',   unlock: 10 },
+    { id: 'crown_1',   name: '👑 智者皇冠',  desc: '象徵最高榮譽的皇冠，戴上就是識字王！',     cost: 150, type: 'head',   unlock: 20 },
+    // --- WEAPON ---
+    { id: 'brush_1',   name: '🖊️ 文字之筆',  desc: '將每個漢字寫得優美流暢，無往不利！',       cost: 30,  type: 'weapon', unlock: 0  },
+    { id: 'sword_1',   name: '⚔️ 識字之劍',  desc: '每掌握一字，劍刃就更加鋒利！',             cost: 70,  type: 'weapon', unlock: 5  },
+    { id: 'bow_1',     name: '🏹 注音神弓',  desc: '以注音符號為箭，百發百中！',               cost: 100, type: 'weapon', unlock: 10 },
+    { id: 'staff_1',   name: '🪄 部首法杖',  desc: '凝聚各部件力量的強大法杖！',               cost: 120, type: 'weapon', unlock: 15 },
+    // --- SHIELD ---
+    { id: 'shield_1',  name: '🛡️ 識字護盾',  desc: '在測驗中守護你的智慧，抵擋錯誤攻擊。',     cost: 50,  type: 'shield', unlock: 0  },
+    { id: 'barrier_1', name: '✨ 星光魔盾',  desc: '閃耀星光的神奇護盾，錯誤傷害減半！',       cost: 110, type: 'shield', unlock: 12 },
+    // --- CAPE ---
+    { id: 'cape_1',    name: '📜 部首披風',  desc: '刻滿古老部首的神奇披風，隨風飄動。',       cost: 60,  type: 'cape',   unlock: 0  },
+    { id: 'cape_2',    name: '🌌 星河披風',  desc: '由無數文字星光編織而成的夢幻披風！',       cost: 130, type: 'cape',   unlock: 20 },
+    { id: 'cape_3',    name: '🐉 龍族戰袍',  desc: '傳說中龍族守護者所穿的神聖戰袍！',         cost: 200, type: 'cape',   unlock: 30 },
+    // --- BOOTS ---
+    { id: 'boots_1',   name: '👟 探險跑鞋',  desc: '讓你在冒險地圖上移動得更快！',             cost: 40,  type: 'boots',  unlock: 0  },
+    { id: 'boots_2',   name: '🥾 傳說戰靴',  desc: '踏遍每座部件小島的勇者之靴！',             cost: 90,  type: 'boots',  unlock: 8  },
+    { id: 'boots_3',   name: '🌟 黃金戰靴',  desc: '識字達人的最高榮耀，黃金打造！',           cost: 170, type: 'boots',  unlock: 25 },
+    // --- RING ---
+    { id: 'ring_1',    name: '💍 水晶戒指',  desc: '提升記憶力，讓你牢記每個漢字！',           cost: 45,  type: 'ring',   unlock: 0  },
+    { id: 'ring_2',    name: '🔮 先知寶環',  desc: '傳說能看穿漢字奧秘的神秘寶環！',           cost: 140, type: 'ring',   unlock: 18 },
+];
+
+const SLOT_INFO = {
+    head:   { label: '頭部', default: '👑' },
+    weapon: { label: '武器', default: '🗡️' },
+    shield: { label: '護盾', default: '🛡️' },
+    cape:   { label: '披風', default: '🌀' },
+    boots:  { label: '靴子', default: '👢' },
+    ring:   { label: '戒指', default: '💍' },
+};
+
+const HERO_TITLES = [
+    { minMastered: 0,  title: '初學者',      emoji: '🧙'   },
+    { minMastered: 5,  title: '文字學徒',    emoji: '🧝'   },
+    { minMastered: 15, title: '識字探險家',  emoji: '🦸'   },
+    { minMastered: 30, title: '部件守護者',  emoji: '🧙‍♂️' },
+    { minMastered: 50, title: '傳說識字王',  emoji: '🤴'   },
+    { minMastered: 80, title: '千字無敵勇者',emoji: '👑'   },
+];
+
+function getHeroInfo() {
+    const mastered = (currentUser.mastered || []).length;
+    let info = HERO_TITLES[0];
+    for (const t of HERO_TITLES) { if (mastered >= t.minMastered) info = t; }
+    return info;
+}
+
+function switchEquipTab(tab) {
+    const isAvatar = tab === 'avatar';
+    document.getElementById('eq-panel-avatar').style.display = isAvatar ? 'flex' : 'none';
+    document.getElementById('eq-panel-shop').style.display   = isAvatar ? 'none' : 'block';
+    ['avatar','shop'].forEach(t => {
+        const btn = document.getElementById('eq-tab-' + t);
+        const active = t === tab;
+        btn.style.background   = active ? 'rgba(251,191,36,0.1)' : 'transparent';
+        btn.style.color        = active ? 'var(--text-gold)'      : '#64748b';
+        btn.style.borderBottom = active ? '3px solid var(--text-gold)' : '3px solid transparent';
+    });
+}
+
+function showEquipment() {
+    if (!currentUser || currentUser.role !== 'student') return;
+    if (!currentUser.inventory) currentUser.inventory = [];
+    if (!currentUser.equipped)  currentUser.equipped  = {};
+    if (!currentUser.stats)     currentUser.stats     = {};
+    if (currentUser.stats.gems === undefined) {
+        currentUser.stats.gems = currentUser.stats.rpgItemsCount || 0;
+    }
+
+    document.getElementById('user-gems-count').innerText = currentUser.stats.gems || 0;
+
+    // Hero avatar
+    const heroInfo = getHeroInfo();
+    document.getElementById('hero-body-emoji').innerText   = heroInfo.emoji;
+    document.getElementById('hero-title-display').innerText = '✨ ' + heroInfo.title;
+    document.getElementById('hero-stats-display').innerHTML =
+        `已掌握：${(currentUser.mastered||[]).length} 個漢字<br>等級：Lv.${currentUser.level}<br>💎 寶石：${currentUser.stats.gems||0}`;
+
+    // Update slot icons on avatar
+    Object.keys(SLOT_INFO).forEach(slotType => {
+        const el = document.getElementById('slot-' + slotType + '-display');
+        if (!el) return;
+        const equippedId = currentUser.equipped[slotType];
+        const item = equippedId ? EQUIPMENT_DATA.find(i => i.id === equippedId) : null;
+        if (item) {
+            el.innerText = item.name.split(' ')[0];
+            el.style.opacity    = '1';
+            el.style.filter     = 'none';
+            el.style.textShadow = '0 0 12px rgba(251,191,36,0.8)';
+        } else {
+            el.innerText = SLOT_INFO[slotType].default;
+            el.style.opacity    = '0.25';
+            el.style.filter     = 'grayscale(1)';
+            el.style.textShadow = 'none';
+        }
+    });
+
+    renderEquippedSlots();
+    renderEquipmentShop();
+    switchEquipTab('avatar');
+    document.getElementById('equipment-modal').style.display = 'flex';
+}
+
+function renderEquippedSlots() {
+    const list = document.getElementById('equipped-slots-list');
+    list.innerHTML = '';
+    Object.keys(SLOT_INFO).forEach(slotType => {
+        const info      = SLOT_INFO[slotType];
+        const equippedId = currentUser.equipped[slotType];
+        const item       = equippedId ? EQUIPMENT_DATA.find(i => i.id === equippedId) : null;
+
+        const row = document.createElement('div');
+        row.style.cssText = `display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;
+            background:${item?'rgba(251,191,36,0.08)':'rgba(30,41,59,0.4)'};
+            border:1px solid ${item?'rgba(251,191,36,0.3)':'#1e293b'};`;
+
+        const icon = document.createElement('div');
+        icon.style.cssText = 'font-size:2rem;width:40px;text-align:center;flex-shrink:0;';
+        icon.innerText = item ? item.name.split(' ')[0] : info.default;
+        if (!item) icon.style.opacity = '0.2';
+
+        const txt = document.createElement('div');
+        txt.style.flex = '1';
+        if (item) {
+            txt.innerHTML = `<div style="font-size:0.9rem;color:var(--text-gold);font-weight:bold;">${item.name.split(' ').slice(1).join(' ')}</div>
+                <div style="font-size:0.75rem;color:#64748b;">${info.label} · ${item.desc}</div>`;
+        } else {
+            txt.innerHTML = `<div style="font-size:0.9rem;color:#334155;">${info.label}</div>
+                <div style="font-size:0.75rem;color:#475569;">空槽 — 前往商店購買裝備</div>`;
+        }
+
+        const btn = document.createElement('button');
+        btn.style.cssText = 'padding:5px 12px;border-radius:8px;border:none;cursor:pointer;font-size:0.8rem;font-family:inherit;flex-shrink:0;';
+        if (item) {
+            btn.innerText         = '卸下';
+            btn.style.background  = '#334155';
+            btn.style.color       = '#94a3b8';
+            btn.onclick = () => equipItem(item.id, slotType);
+        } else {
+            btn.innerText         = '🏪 購買';
+            btn.style.background  = 'var(--text-gold)';
+            btn.style.color       = '#000';
+            btn.onclick = () => switchEquipTab('shop');
+        }
+
+        row.appendChild(icon);
+        row.appendChild(txt);
+        row.appendChild(btn);
+        list.appendChild(row);
+    });
+}
+
+function renderEquipmentShop() {
+    const list    = document.getElementById('equipment-list');
+    list.innerHTML = '';
+    const mastered = (currentUser.mastered || []).length;
+
+    EQUIPMENT_DATA.forEach(item => {
+        const isOwned    = (currentUser.inventory || []).includes(item.id);
+        const isEquipped = currentUser.equipped[item.type] === item.id;
+        const isLocked   = mastered < item.unlock;
+        const slotLabel  = SLOT_INFO[item.type]?.label || item.type;
+        const emoji      = item.name.split(' ')[0];
+        const nameText   = item.name.split(' ').slice(1).join(' ');
+
+        const card = document.createElement('div');
+        card.style.cssText = `padding:14px;border-radius:14px;text-align:center;transition:transform 0.15s;
+            background:${isEquipped?'rgba(251,191,36,0.15)':isLocked?'rgba(15,23,42,0.5)':'rgba(30,41,59,0.8)'};
+            border:1px solid ${isEquipped?'var(--text-gold)':isLocked?'#1e293b':'#334155'};
+            opacity:${isLocked?'0.5':'1'};cursor:${isLocked?'default':'pointer'};`;
+
+        card.innerHTML = `
+            <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${slotLabel}</div>
+            <div style="font-size:2.8rem;margin-bottom:6px;">${emoji}</div>
+            <div style="font-size:0.85rem;color:${isEquipped?'var(--text-gold)':'#e2e8f0'};font-weight:bold;margin-bottom:6px;">${nameText}</div>
+            <div style="font-size:0.72rem;color:#64748b;margin-bottom:10px;line-height:1.4;">${item.desc}</div>
+            ${isLocked ? `<div style="font-size:0.72rem;color:#ef4444;">🔒 需掌握 ${item.unlock} 字解鎖</div>` : ''}
+        `;
+
+        if (!isLocked) {
+            const btn = document.createElement('button');
+            btn.style.cssText = `padding:5px 14px;border-radius:8px;border:none;cursor:pointer;font-size:0.8rem;font-family:inherit;width:100%;font-weight:bold;`;
+            if (isOwned) {
+                btn.style.background = isEquipped ? '#334155' : 'var(--accent-blue)';
+                btn.style.color      = 'white';
+                btn.innerText        = isEquipped ? '✅ 使用中' : '裝備';
+                btn.onclick = () => equipItem(item.id, item.type);
+            } else {
+                btn.style.background = 'var(--text-gold)';
+                btn.style.color      = '#000';
+                btn.innerText        = `💎 ${item.cost} 購買`;
+                btn.onclick = () => buyEquipItem(item.id, item.cost);
+            }
+            card.appendChild(btn);
+            card.addEventListener('mouseover', () => { card.style.transform = 'translateY(-3px)'; });
+            card.addEventListener('mouseout',  () => { card.style.transform = 'none'; });
+        }
+
+        list.appendChild(card);
+    });
+}
+
+function closeEquipmentModal() {
+    document.getElementById('equipment-modal').style.display = 'none';
+}
+
+function buyEquipItem(id, cost) {
+    if (!currentUser.stats) currentUser.stats = {};
+    const gems = currentUser.stats.gems || 0;
+    if (gems < cost) {
+        alert(`❌ 寶石不夠！\n目前：${gems} 💎 | 需要：${cost} 💎\n\n💡 提示：進入 RPG 冒險模式答題即可收集寶石！`);
+        return;
+    }
+    currentUser.stats.gems = gems - cost;
+    if (!currentUser.inventory) currentUser.inventory = [];
+    currentUser.inventory.push(id);
+    saveUser();
+    const item = EQUIPMENT_DATA.find(i => i.id === id);
+    showEquipment();
+    alert(`🎉 成功購入「${item ? item.name : id}」！`);
+}
+
+function equipItem(id, type) {
+    if (!currentUser.equipped) currentUser.equipped = {};
+    if (currentUser.equipped[type] === id) {
+        delete currentUser.equipped[type];
+    } else {
+        currentUser.equipped[type] = id;
+    }
+    saveUser();
+    showEquipment();
+    if (typeof renderProfile === 'function') renderProfile();
+}
+
+</script>
     <script>
         lucide.createIcons();
     </script>
