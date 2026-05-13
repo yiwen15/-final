@@ -341,7 +341,7 @@ function importStudentFromCode() {
              document.getElementById('import-feedback').innerText += '（已填入暱稱，請點擊「開始冒險」）';
         }
 
-        if (currentUser.role === 'teacher') renderTeacherDashboard();
+        if (currentUser && currentUser.role === 'teacher') renderTeacherDashboard();
         
         setTimeout(() => {
             document.getElementById('student-import-modal').style.display = 'none';
@@ -357,6 +357,11 @@ function showDashboard() {
     document.getElementById('login-screen').classList.remove('active');
     document.getElementById('navbar').style.display = 'flex';
     document.getElementById('userName').innerText = `${currentUser.name} (${selectedGrade})`;
+    
+    // Hide device switcher after login
+    const switcher = document.querySelector('.device-switcher');
+    if (switcher) switcher.style.display = 'none';
+
     if (currentUser.role === 'teacher') { 
         console.log('Role: Teacher');
         showScreen('teacher-screen'); 
@@ -1907,130 +1912,7 @@ function checkPuzzle() {
 }
 
 // =======================
-// Falling Catch Minigame
-// =======================
-let fallingGameInterval;
-let fallingItems = [];
-let fallingScore = 0;
-let fallingTime = 30;
-let fallingTargetCompId = null;
 
-function startFallingGame() {
-    // Determine the target radical based on active island or default to water
-    fallingTargetCompId = activeIslandId !== 'all' ? activeIslandId : 'water';
-    const compData = libraryData.components.find(c => c.id === fallingTargetCompId);
-    
-    document.getElementById('falling-game-title').innerText = `🌧️ 捕捉【${compData.symbol}部】的大挑戰！`;
-    document.getElementById('btn-start-falling').style.display = 'none';
-    document.getElementById('falling-game-over').style.display = 'none';
-    
-    fallingScore = 0;
-    fallingTime = 30;
-    fallingItems = [];
-    
-    document.getElementById('falling-score').innerText = fallingScore;
-    document.getElementById('falling-timer').innerText = fallingTime;
-    
-    const canvas = document.getElementById('falling-canvas');
-    canvas.onmousedown = handleFallingClick;
-    
-    if(fallingGameInterval) clearInterval(fallingGameInterval);
-    fallingGameInterval = setInterval(updateFallingGame, 50); // 20 fps
-    
-    // Timer
-    const timerInt = setInterval(() => {
-        fallingTime--;
-        document.getElementById('falling-timer').innerText = fallingTime;
-        if(fallingTime <= 0) {
-            clearInterval(timerInt);
-            endFallingGame();
-        }
-    }, 1000);
-}
-
-function updateFallingGame() {
-    const canvas = document.getElementById('falling-canvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-    
-    // Spawn new word
-    if(Math.random() < 0.05) {
-        // Pick a random char
-        const allChars = Object.keys(libraryData.characters);
-        const randChar = allChars[Math.floor(Math.random() * allChars.length)];
-        fallingItems.push({
-            char: randChar,
-            x: 50 + Math.random() * (canvas.width - 100),
-            y: -50,
-            speed: 2 + Math.random() * 3,
-            comp: libraryData.characters[randChar].comp
-        });
-    }
-
-    // Draw and update items
-    for(let i=fallingItems.length-1; i>=0; i--) {
-        let item = fallingItems[i];
-        item.y += item.speed;
-        
-        ctx.font = '40px monospace';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.char, item.x, item.y);
-        
-        if(item.y > canvas.height + 50) {
-            fallingItems.splice(i, 1);
-        }
-    }
-}
-
-function handleFallingClick(e) {
-    const canvas = document.getElementById('falling-canvas');
-    const rect = canvas.getBoundingClientRect();
-    
-    // Support both mouse and touch if needed, but clientX is standard for mousedown
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    
-    if (clientX === undefined) return;
-
-    // Scale coordinates based on CSS display size vs internal canvas size
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    const cx = (clientX - rect.left) * scaleX;
-    const cy = (clientY - rect.top) * scaleY;
-    
-    for(let i=fallingItems.length-1; i>=0; i--) {
-        let item = fallingItems[i];
-        let dist = Math.sqrt(Math.pow(cx - item.x, 2) + Math.pow(cy - item.y, 2));
-        if(dist < 30) {
-            // Hit!
-            if(item.comp === fallingTargetCompId) {
-                fallingScore += 10;
-                // Simple visual feedback could go here
-            } else {
-                fallingScore -= 5;
-            }
-            document.getElementById('falling-score').innerText = fallingScore;
-            fallingItems.splice(i, 1);
-            break;
-        }
-    }
-}
-
-function endFallingGame() {
-    clearInterval(fallingGameInterval);
-    document.getElementById('falling-game-over').style.display = 'block';
-    document.getElementById('falling-final-score').innerText = fallingScore;
-    document.getElementById('btn-start-falling').style.display = 'inline-block';
-    document.getElementById('btn-start-falling').innerText = '再玩一次';
-    
-    if(fallingScore > 0) {
-        gainXP(fallingScore); // Reward user
-    }
-}
 
 // =======================
 // Adventure Word Quiz (New in 2.1)

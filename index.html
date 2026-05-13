@@ -151,8 +151,7 @@
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 15px;">
-                    <button class="btn btn-secondary" onclick="startFallingGame()">🌧️ 天降國字遊戲挑戰！</button>
-                    <button class="btn" style="margin-left: 10px;" onclick="showDashboard()">返回地圖</button>
+                    <button class="btn" onclick="showDashboard()">返回地圖</button>
                 </div>
             </section>
 
@@ -286,27 +285,6 @@
                 </div>
             </section>
 
-            <!-- 9. Falling Catch Game Screen -->
-            <section id="falling-game-screen" class="screen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h2 id="falling-game-title" style="color: #38bdf8;">🌧️ 天降國字大考驗 🌧️</h2>
-                    <div style="font-size: 1.5rem; color: var(--text-gold);">
-                        分數：<span id="falling-score">0</span> | 倒數：<span id="falling-timer">30</span>s
-                    </div>
-                </div>
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <p id="falling-game-desc">提示：抓對有特定部首的字可以得分，點錯扣分喔！</p>
-                    <button id="btn-start-falling" class="btn" onclick="startFallingGame()">開始遊戲</button>
-                </div>
-                <div style="display: flex; justify-content: center; position: relative;">
-                    <canvas id="falling-canvas" width="800" height="500" style="background: linear-gradient(to bottom, #0f172a, #1e293b); border: 2px solid #38bdf8; border-radius: 10px; cursor: crosshair;"></canvas>
-                    <div id="falling-game-over" style="display: none; position: absolute; top: 150px; background: rgba(0,0,0,0.8); padding: 2rem; border-radius: 15px; border: 2px solid var(--text-gold); text-align: center;">
-                        <h2 style="font-size: 3rem; margin-bottom: 1rem;">遊戲結束</h2>
-                        <p style="font-size: 1.5rem;">最終得分：<span id="falling-final-score"></span></p>
-                        <button class="btn" onclick="showScreen('map-screen')" style="margin-top: 1rem;">返回地圖</button>
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
 
@@ -2649,121 +2627,6 @@ function checkPuzzle() {
 }
 
 // =======================
-// Falling Catch Minigame
-// =======================
-let fallingGameInterval;
-let fallingItems = [];
-let fallingScore = 0;
-let fallingTime = 30;
-let fallingTargetCompId = null;
-
-function startFallingGame() {
-    // Determine the target radical based on active island or default to water
-    fallingTargetCompId = activeIslandId !== 'all' ? activeIslandId : 'water';
-    const compData = libraryData.components.find(c => c.id === fallingTargetCompId);
-    
-    document.getElementById('falling-game-title').innerText = `🌧️ 捕捉【${compData.symbol}部】的大挑戰！`;
-    document.getElementById('btn-start-falling').style.display = 'none';
-    document.getElementById('falling-game-over').style.display = 'none';
-    
-    fallingScore = 0;
-    fallingTime = 30;
-    fallingItems = [];
-    
-    document.getElementById('falling-score').innerText = fallingScore;
-    document.getElementById('falling-timer').innerText = fallingTime;
-    
-    const canvas = document.getElementById('falling-canvas');
-    canvas.onclick = handleFallingClick;
-    
-    if(fallingGameInterval) clearInterval(fallingGameInterval);
-    fallingGameInterval = setInterval(updateFallingGame, 50); // 20 fps
-    
-    // Timer
-    const timerInt = setInterval(() => {
-        fallingTime--;
-        document.getElementById('falling-timer').innerText = fallingTime;
-        if(fallingTime <= 0) {
-            clearInterval(timerInt);
-            endFallingGame();
-        }
-    }, 1000);
-}
-
-function updateFallingGame() {
-    const canvas = document.getElementById('falling-canvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-    
-    // Spawn new word
-    if(Math.random() < 0.05) {
-        // Pick a random char
-        const allChars = Object.keys(libraryData.characters);
-        const randChar = allChars[Math.floor(Math.random() * allChars.length)];
-        fallingItems.push({
-            char: randChar,
-            x: 50 + Math.random() * (canvas.width - 100),
-            y: -50,
-            speed: 2 + Math.random() * 3,
-            comp: libraryData.characters[randChar].comp
-        });
-    }
-
-    // Draw and update items
-    for(let i=fallingItems.length-1; i>=0; i--) {
-        let item = fallingItems[i];
-        item.y += item.speed;
-        
-        ctx.font = '40px monospace';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.char, item.x, item.y);
-        
-        if(item.y > canvas.height + 50) {
-            fallingItems.splice(i, 1);
-        }
-    }
-}
-
-function handleFallingClick(e) {
-    const canvas = document.getElementById('falling-canvas');
-    const rect = canvas.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    
-    for(let i=fallingItems.length-1; i>=0; i--) {
-        let item = fallingItems[i];
-        let dist = Math.sqrt(Math.pow(cx - item.x, 2) + Math.pow(cy - item.y, 2));
-        if(dist < 30) {
-            // Hit!
-            if(item.comp === fallingTargetCompId) {
-                fallingScore += 10;
-                // Simple visual feedback could go here
-            } else {
-                fallingScore -= 5;
-            }
-            document.getElementById('falling-score').innerText = fallingScore;
-            fallingItems.splice(i, 1);
-            break;
-        }
-    }
-}
-
-function endFallingGame() {
-    clearInterval(fallingGameInterval);
-    document.getElementById('falling-game-over').style.display = 'block';
-    document.getElementById('falling-final-score').innerText = fallingScore;
-    document.getElementById('btn-start-falling').style.display = 'inline-block';
-    document.getElementById('btn-start-falling').innerText = '再玩一次';
-    
-    if(fallingScore > 0) {
-        gainGems(Math.floor(fallingScore / 5)); 
-        gainXP(fallingScore); // Reward user
-        saveUser();
-    }
-}
 
 // =======================
 // Adventure Word Quiz (New in 2.1)
