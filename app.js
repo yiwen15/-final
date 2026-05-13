@@ -1361,22 +1361,25 @@ function applyAtmosphere(type, container) {
 }
 
 // Drawing logic
+let canvasInitialized = false;
 function initCanvas() {
     const canvas = document.getElementById('drawing-canvas'); 
     if (!canvas) return; 
     ctx = canvas.getContext('2d');
     
-    // Mouse events
-    canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
-    canvas.addEventListener('mousemove', paint);
-    canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
-    canvas.addEventListener('mouseleave', () => { isDrawing = false; ctx.beginPath(); });
-    
-    // Touch events for mobile
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; paintTouch(e); }, { passive: false });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); paintTouch(e); }, { passive: false });
-    canvas.addEventListener('touchend', (e) => { e.preventDefault(); isDrawing = false; ctx.beginPath(); }, { passive: false });
-    
+    if (!canvasInitialized) {
+        canvasInitialized = true;
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; paint(e); });
+        canvas.addEventListener('mousemove', paint);
+        canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
+        canvas.addEventListener('mouseleave', () => { isDrawing = false; ctx.beginPath(); });
+        
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; paintTouch(e); }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); paintTouch(e); }, { passive: false });
+        canvas.addEventListener('touchend', (e) => { e.preventDefault(); isDrawing = false; ctx.beginPath(); }, { passive: false });
+    }
     // Resize canvas for mobile
     resizeCanvas();
 }
@@ -1409,16 +1412,24 @@ function paintTouch(e) {
     ctx.moveTo(x, y);
 }
 function startDrawing(char) { 
-    currentChar = char; 
-    document.getElementById('drawing-char-display').innerText = char;
-    const tv = document.getElementById('drawing-trace-text');
-    if (tv) { tv.innerText = char; }
-    const logic = libraryData.characters[char]?.logic || '';
-    document.getElementById('drawing-desc').innerText = `💡 繪畫靈感：${logic}`;
-    // 關閉所有可能開著的 modal（char-modal, quiz-modal 等）
+    currentChar = char;
+    // 1. 先關閉所有 modals
     document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-    showScreen('drawing-screen'); 
-    clearCanvas(); 
+    // 2. 先切換畫面，讓 canvas 變成可見狀態
+    showScreen('drawing-screen');
+    // 3. 更新 UI 文字
+    const charDisplay = document.getElementById('drawing-char-display');
+    if (charDisplay) charDisplay.innerText = char;
+    const tv = document.getElementById('drawing-trace-text');
+    if (tv) tv.innerText = char;
+    const logic = libraryData.characters[char]?.logic || '';
+    const descEl = document.getElementById('drawing-desc');
+    if (descEl) descEl.innerText = `💡 繪畫靈感：${logic}`;
+    // 4. 畫面顯示後才初始化/重置 canvas
+    requestAnimationFrame(() => {
+        initCanvas();
+        clearCanvas();
+    });
 }
 function paint(e) { 
     if (!isDrawing) return; 
