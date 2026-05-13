@@ -1415,7 +1415,8 @@ function startDrawing(char) {
     if (tv) { tv.innerText = char; }
     const logic = libraryData.characters[char]?.logic || '';
     document.getElementById('drawing-desc').innerText = `💡 繪畫靈感：${logic}`;
-    closeModal(); 
+    // 關閉所有可能開著的 modal（char-modal, quiz-modal 等）
+    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
     showScreen('drawing-screen'); 
     clearCanvas(); 
 }
@@ -1993,5 +1994,14 @@ function checkWordQuiz(opt, btn) {
             document.getElementById('word-quiz-modal').style.display = 'none';
             renderRPG();
         }, 1200);
+    }
+}
+
+function cancelDrawing() {
+    clearCanvas();
+    if (currentArea) {
+        showLibrary(currentArea);
+    } else {
+        showScreen('map-screen');
     }
 }
