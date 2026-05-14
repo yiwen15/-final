@@ -44,6 +44,7 @@
                 <div class="stat-item" id="userName">冒險者</div>
                 <button class="btn btn-secondary" onclick="showScreen('profile-screen'); renderProfile();" style="padding:5px 15px;font-size:0.8rem;background:var(--accent-purple);color:white;">🔮 精靈卡</button>
                 <button class="btn btn-secondary" onclick="showCardBook()" style="padding:5px 15px;font-size:0.8rem;background:var(--accent-blue);color:white;">📖 字卡冊</button>
+                <button class="btn btn-secondary" onclick="startFallingGame()" style="padding:5px 15px;font-size:0.8rem;background:#38bdf8;color:white;">🌧️ 接接樂</button>
                 <button class="btn btn-secondary" onclick="showEquipment()" style="padding:5px 15px;font-size:0.8rem;">🛡️ 裝備</button>
                 <button class="btn btn-secondary" onclick="showIntroManual()" style="padding:5px 15px;font-size:0.8rem;background:var(--primary-color);">📜 冒險書</button>
                 <button class="btn btn-secondary" onclick="exportStudentShareCode()" style="padding:5px 15px;font-size:0.8rem;background:#10b981;color:white;">📤 匯出進度</button>
@@ -286,11 +287,11 @@
                     </div>
                 </div>
                 <div style="text-align: center; margin-bottom: 1rem;">
-                    <p id="falling-game-desc">提示：抓對有特定部首的字可以得分，點錯扣分喔！</p>
+                    <p id="falling-game-desc">提示：移動滑鼠控制籃子，接住上方提示漢字的「正確造詞」可以得分，接到無關的詞會扣分喔！</p>
                     <button id="btn-start-falling" class="btn" onclick="startFallingGame()">開始遊戲</button>
                 </div>
                 <div style="display: flex; justify-content: center; position: relative;">
-                    <canvas id="falling-canvas" width="800" height="500" style="background: linear-gradient(to bottom, #0f172a, #1e293b); border: 2px solid #38bdf8; border-radius: 10px; cursor: crosshair;"></canvas>
+                    <canvas id="falling-canvas" width="800" height="500" style="background: linear-gradient(to bottom, #0f172a, #1e293b); border: 2px solid #38bdf8; border-radius: 10px; cursor: none;"></canvas>
                     <div id="falling-game-over" style="display: none; position: absolute; top: 150px; background: rgba(0,0,0,0.8); padding: 2rem; border-radius: 15px; border: 2px solid var(--text-gold); text-align: center;">
                         <h2 style="font-size: 3rem; margin-bottom: 1rem;">遊戲結束</h2>
                         <p style="font-size: 1.5rem;">最終得分：<span id="falling-final-score"></span></p>
