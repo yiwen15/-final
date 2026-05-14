@@ -660,7 +660,7 @@ function finishQuiz() {
     optionsDiv.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center;">
             <div style="font-size: 5rem; margin-bottom: 1rem;">${currentChar}</div>
-            <p style="font-size: 1.2rem; margin-bottom: 2rem; color: #4ade80;">你已經完美掌握了這個字！</p>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem; color: #4ade80;">你已經完美掌握了這個字！獲得 5 顆鑽石 💎</p>
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <button class="btn" onclick="startDrawing('${currentChar}')">🎨 幫這個字畫張畫 (裝飾小島)</button>
                 <button class="btn btn-secondary" onclick="closeQuizAndGoBack()">📚 繼續學習其他字</button>
@@ -674,6 +674,11 @@ function finishQuiz() {
         gainXP(50); 
         checkBadgesAndAbilities();
     }
+    
+    if (!currentUser.stats) currentUser.stats = {};
+    currentUser.stats.gems = (currentUser.stats.gems || 0) + 5;
+    saveUser();
+    
     modal.style.display = 'flex';
 }
 
@@ -1986,9 +1991,14 @@ function checkWordQuiz(opt, btn) {
     const fb = document.getElementById('word-quiz-feedback');
     if(opt === currentWordCorrectAns) {
         btn.classList.add('correct');
-        fb.innerText = '✨ 太棒了！組合成功！';
+        fb.innerText = '✨ 太棒了！組合成功！獲得 5 顆鑽石 💎';
         fb.style.color = '#4ade80';
         gainXP(40);
+        
+        if (!currentUser.stats) currentUser.stats = {};
+        currentUser.stats.gems = (currentUser.stats.gems || 0) + 5;
+        saveUser();
+        
         delete rpgItems[currentWordQuizKey];
         setTimeout(() => {
             document.getElementById('word-quiz-modal').style.display = 'none';
